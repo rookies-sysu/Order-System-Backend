@@ -4,7 +4,7 @@ from getpass import getpass
 # input the secrect of db
 # secrect = getpass("Connecting db..\n--> password: ")
 # connect to dataset
-db = pymysql.connect("localhost", "root", "yungljy96", "TINYHIPPO" )
+db = pymysql.connect("localhost", "root", "...", "TINYHIPPO" )
 print('success!')
 # create a cursor
 cursor = db.cursor()
