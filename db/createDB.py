@@ -15,21 +15,14 @@ cursor = db.cursor()
 sql_customer = """CREATE TABLE IF NOT EXISTS `TINYHIPPO`.`Customer` (
                     `customerID` INT UNSIGNED NOT NULL AUTO_INCREMENT,
                     `customerName` VARCHAR(20) NOT NULL,
-                    `orderID` INT UNSIGNED NOT NULL,
                     `tableID` INT UNSIGNED NOT NULL,
                     PRIMARY KEY (`customerID`, `tableID`),
                     UNIQUE INDEX `customer_id_UNIQUE` (`customerID` ASC),
-                    INDEX `fk_Customer_Edit1_idx` (`orderID` ASC),
-                    INDEX `fk_Customer_Table1_idx` (`tableID` ASC),
+                    INDEX `fk_Customer_ResturantTable1_idx` (`tableID` ASC),
                     UNIQUE INDEX `customerName_UNIQUE` (`customerName` ASC),
-                    CONSTRAINT `fk_Customer_Edit1`
-                      FOREIGN KEY (`orderID`)
-                      REFERENCES `TINYHIPPO`.`Edit` (`orderID`)
-                      ON DELETE NO ACTION
-                      ON UPDATE NO ACTION,
-                    CONSTRAINT `fk_Customer_Table1`
+                    CONSTRAINT `fk_Customer_ResturantTable1`
                       FOREIGN KEY (`tableID`)
-                      REFERENCES `TINYHIPPO`.`Table` (`tableID`)
+                      REFERENCES `TINYHIPPO`.`ResturantTable` (`tableID`)
                       ON DELETE NO ACTION
                       ON UPDATE NO ACTION);"""
 
@@ -40,26 +33,29 @@ sql_resturant = """CREATE TABLE IF NOT EXISTS `TINYHIPPO`.`Resturant` (
                      `resturantID` INT UNSIGNED NOT NULL AUTO_INCREMENT,
                      `resturantName` VARCHAR(50) NOT NULL,
                      `password` VARCHAR(45) NOT NULL,
+                     `phone` VARCHAR(45) NOT NULL,
+                     `email` VARCHAR(45) NOT NULL,
                      PRIMARY KEY (`resturantID`),
                      UNIQUE INDEX `resturantID_UNIQUE` (`resturantID` ASC),
                      UNIQUE INDEX `resturantName_UNIQUE` (`resturantName` ASC));"""
 
 ## -----------------------------------------------------
-## Table `TINYHIPPO`.`Order`
+## Table `TINYHIPPO`.`OrderList`
 ## -----------------------------------------------------
-sql_order = """CREATE TABLE IF NOT EXISTS `TINYHIPPO`.`Order` (
+sql_order = """CREATE TABLE IF NOT EXISTS `TINYHIPPO`.`OrderList` (
                  `orderID` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                 `orderNumber` INT UNSIGNED NOT NULL,
                  `orderDishes` VARCHAR(500) NOT NULL,
                  `status` VARCHAR(20) NOT NULL,
                  `total` FLOAT NOT NULL,
                  `isPaid` VARCHAR(10) NOT NULL,
-                 `customerID` INT UNSIGNED NOT NULL,
-                 PRIMARY KEY (`orderID`, `customerID`),
-                 INDEX `fk_Order_Edit_idx` (`customerID` ASC),
+                 `resturantID` INT UNSIGNED NOT NULL,
+                 PRIMARY KEY (`orderID`, `resturantID`),
                  UNIQUE INDEX `orderID_UNIQUE` (`orderID` ASC),
-                 CONSTRAINT `fk_Order_Edit`
-                   FOREIGN KEY (`customerID`)
-                   REFERENCES `TINYHIPPO`.`Edit` (`customerID`)
+                 INDEX `fk_OrderList_Resturant1_idx` (`resturantID` ASC),
+                 CONSTRAINT `fk_OrderList_Resturant1`
+                   FOREIGN KEY (`resturantID`)
+                   REFERENCES `TINYHIPPO`.`Resturant` (`resturantID`)
                    ON DELETE NO ACTION
                    ON UPDATE NO ACTION);"""
 
@@ -76,10 +72,9 @@ sql_dish = """CREATE TABLE IF NOT EXISTS `TINYHIPPO`.`Dish` (
                 `monthlySales` INT UNSIGNED NOT NULL,
                 `dishTypeID` INT UNSIGNED NOT NULL,
                 `menuID` INT UNSIGNED NOT NULL,
-                PRIMARY KEY (`dishID`, `orderID`, `dishTypeID`, `menuID`),
+                PRIMARY KEY (`dishID`, `dishTypeID`, `menuID`),
                 UNIQUE INDEX `dishID_UNIQUE` (`dishID` ASC),
                 INDEX `fk_Dish_DishType1_idx` (`dishTypeID` ASC),
-                INDEX `fk_Dish_Order1_idx` (`orderID` ASC),
                 INDEX `fk_Dish_Menu1_idx` (`menuID` ASC),
                 CONSTRAINT `fk_Dish_DishType1`
                   FOREIGN KEY (`dishTypeID`)
@@ -125,17 +120,16 @@ sql_menu = """CREATE TABLE IF NOT EXISTS `TINYHIPPO`.`Menu` (
                   ON UPDATE NO ACTION);"""
 
 ## -----------------------------------------------------
-## Table `TINYHIPPO`.`Table`
+## Table `TINYHIPPO`.`ResturantTable`
 ## -----------------------------------------------------
-sql_table = """CREATE TABLE IF NOT EXISTS `TINYHIPPO`.`Table` (
+sql_table = """CREATE TABLE IF NOT EXISTS `TINYHIPPO`.`ResturantTable` (
                  `tableID` INT UNSIGNED NOT NULL AUTO_INCREMENT,
                  `tableNumber` INT UNSIGNED NOT NULL,
                  `resturantID` INT UNSIGNED NOT NULL,
                  PRIMARY KEY (`tableID`, `resturantID`),
-                 UNIQUE INDEX `tableNumber_UNIQUE` (`tableNumber` ASC),
                  UNIQUE INDEX `tableID_UNIQUE` (`tableID` ASC),
-                 INDEX `fk_Table_Resturant1_idx` (`resturantID` ASC),
-                 CONSTRAINT `fk_Table_Resturant1`
+                 INDEX `fk_ResturantTable_Resturant1_idx` (`resturantID` ASC),
+                 CONSTRAINT `fk_ResturantTable_Resturant1`
                    FOREIGN KEY (`resturantID`)
                    REFERENCES `TINYHIPPO`.`Resturant` (`resturantID`)
                    ON DELETE NO ACTION
@@ -150,23 +144,29 @@ sql_QRlink = """CREATE TABLE IF NOT EXISTS `TINYHIPPO`.`QRlink` (
                   `tableID` INT UNSIGNED NOT NULL,
                   PRIMARY KEY (`linkID`, `tableID`),
                   UNIQUE INDEX `linkID_UNIQUE` (`linkID` ASC),
-                  INDEX `fk_QRlink_Table1_idx` (`tableID` ASC),
-                  CONSTRAINT `fk_QRlink_Table1`
+                  INDEX `fk_QRlink_ResturantTable1_idx` (`tableID` ASC),
+                  CONSTRAINT `fk_QRlink_ResturantTable1`
                     FOREIGN KEY (`tableID`)
-                    REFERENCES `TINYHIPPO`.`Table` (`tableID`)
+                    REFERENCES `TINYHIPPO`.`ResturantTable` (`tableID`)
                     ON DELETE NO ACTION
                     ON UPDATE NO ACTION);"""
 
 ## -----------------------------------------------------
-## Table `TINYHIPPO`.`Edit`
+## Table `TINYHIPPO`.`EditRelation`
 ## -----------------------------------------------------
-sql_edit = """CREATE TABLE IF NOT EXISTS `TINYHIPPO`.`Edit` (
+sql_edit = """CREATE TABLE IF NOT EXISTS `TINYHIPPO`.`EditRelation` (
                 `customerID` INT UNSIGNED NOT NULL,
                 `orderID` INT UNSIGNED NOT NULL,
-                `editedTime` DATE NOT NULL,
-                PRIMARY KEY (`customerID`, `orderID`),
+                `editedTime` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+                `resturantID` INT UNSIGNED NOT NULL,
+                PRIMARY KEY (`customerID`, `orderID`, `resturantID`),
                 UNIQUE INDEX `customerID_UNIQUE` (`customerID` ASC),
-                UNIQUE INDEX `orderID_UNIQUE` (`orderID` ASC));"""
+                INDEX `fk_EditRelation_Resturant1_idx` (`resturantID` ASC),
+                CONSTRAINT `fk_EditRelation_Resturant1`
+                  FOREIGN KEY (`resturantID`)
+                  REFERENCES `TINYHIPPO`.`Resturant` (`resturantID`)
+                  ON DELETE NO ACTION
+                  ON UPDATE NO ACTION);"""
 
 # execute sql commands
 cursor.execute(sql_resturant)
