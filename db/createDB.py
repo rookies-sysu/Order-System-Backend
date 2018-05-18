@@ -157,7 +157,7 @@ sql_QRlink = """CREATE TABLE IF NOT EXISTS `TINYHIPPO`.`QRlink` (
 sql_edit = """CREATE TABLE IF NOT EXISTS `TINYHIPPO`.`EditRelation` (
                 `customerID` INT UNSIGNED NOT NULL,
                 `orderID` INT UNSIGNED NOT NULL,
-                `editedTime` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+                `editedTime` DATETIME NOT NULL,
                 `resturantID` INT UNSIGNED NOT NULL,
                 PRIMARY KEY (`customerID`, `orderID`, `resturantID`),
                 UNIQUE INDEX `customerID_UNIQUE` (`customerID` ASC),
