@@ -4,7 +4,7 @@ from getpass import getpass
 # input the secrect of db
 # secrect = getpass("Connecting db..\n--> password: ")
 # connect to dataset
-db = pymysql.connect("localhost", "root", "yungljy96", "TINYHIPPO" )
+db = pymysql.connect("localhost", "root", "yungljy96", "TINYHIPPO")
 print('success!')
 # create a cursor
 cursor = db.cursor()
@@ -15,6 +15,23 @@ def executeSQL(sql):
         db.commit()
     except:
         db.rollback()
+
+def getUniqueResult(sql):
+    cursor.execute(sql)
+    results = cursor.fetchall()
+    result = ''
+    for row in results:
+        result = row[0]
+    return result
+
+def getResultSet(sql):
+    cursor.execute(sql)
+    results = cursor.fetchall()
+    resultSet = []
+    for row in results:
+        resultSet.append(row[0])
+    return resultSet
+
 def signIn(resturantName, password):
     sql = """SELECT resturantID FROM Resturant
                WHERE resturantName='%s' AND password='%s' ;""" % (resturantName, password)
@@ -33,21 +50,7 @@ def getNow():
         now = row[0]
     return now
 
-def getUniqueResult(sql):
-    cursor.execute(sql)
-    results = cursor.fetchall()
-    result = ''
-    for row in results:
-        result = row[0]
-    return result
 
-def getResultSet(sql):
-    cursor.execute(sql)
-    results = cursor.fetchall()
-    resultSet = []
-    for row in results:
-        resultSet.append(row[0])
-    return resultSet
 
 
 ## -----------------------------------------------------
