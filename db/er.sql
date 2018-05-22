@@ -75,6 +75,7 @@ CREATE TABLE IF NOT EXISTS `TINYHIPPO`.`OrderList` (
   `orderDetail` VARCHAR(500) NOT NULL,
   `total` FLOAT NOT NULL,
   `isPaid` VARCHAR(10) NOT NULL,
+  `editedTime` DATETIME NOT NULL,
   `tableID` INT UNSIGNED NOT NULL,
   `customerID` INT UNSIGNED NOT NULL,
   PRIMARY KEY (`orderID`, `tableID`, `customerID`),
