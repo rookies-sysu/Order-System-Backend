@@ -107,4 +107,4 @@ ENV/
 instance/
 
 # db config
-./db/config
+db/config
