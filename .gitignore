@@ -105,3 +105,6 @@ ENV/
 .vscode/
 
 instance/
+
+# db config
+./db/config
