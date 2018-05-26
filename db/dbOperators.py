@@ -1,57 +1,19 @@
 import pymysql
-from getpass import getpass
+from tools import *
 
-# input the secrect of db
-# secrect = getpass("Connecting db..\n--> password: ")
+path_to_config = "./config"
+
+# load config of database
+config = get_config(path_to_config)
+
 # connect to dataset
-db = pymysql.connect("localhost", "root", "yungljy96", "TINYHIPPO")
-print('success!')
+db = pymysql.connect(host=config['localhost']['host'],
+                     user=config['localhost']['user'],
+                     password=config['localhost']['password'],
+                     database=config['localhost']['database'],
+                     charset=config['localhost']['charset'])
 # create a cursor
 cursor = db.cursor()
-
-def executeSQL(sql):
-    try:
-        cursor.execute(sql)
-        db.commit()
-    except:
-        db.rollback()
-
-def getUniqueResult(sql):
-    cursor.execute(sql)
-    results = cursor.fetchall()
-    result = ''
-    for row in results:
-        result = row[0]
-    return result
-
-def getResultSet(sql):
-    cursor.execute(sql)
-    results = cursor.fetchall()
-    resultSet = []
-    for row in results:
-        resultSet.append(row[0])
-    return resultSet
-
-def signIn(resturantName, password):
-    sql = """SELECT resturantID FROM Resturant
-               WHERE resturantName='%s' AND password='%s' ;""" % (resturantName, password)
-    cursor.execute(sql)
-    results = cursor.fetchall()
-    resturantID = ''
-    for row in results:
-        resturantID = row[0]
-    return resturantID != ''
-
-def getNow():
-    cursor.execute("SELECT DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%S');")
-    results = cursor.fetchall()
-    now = ''
-    for row in results:
-        now = row[0]
-    return now
-
-
-
 
 ## -----------------------------------------------------
 ## Table `TINYHIPPO`.`Resturant`
@@ -116,21 +78,15 @@ class resturantOperator():
         else:
             print('[FAILED] Please sign in first.')
     def deleteResturantForeignKey(self, resturantID):
-        # Menu
-        mOpt = menuOperator(resturantName=self.resturantName, password=self.password)
-        mOpt.deleteMenuByResturantID(resturantID=self.resturantID)
         # DishType
         dtOpt = dishTypeOperator(resturantName=self.resturantName, password=self.password)
         dtOpt.deleteDishTypeByResturantID(resturantID=self.resturantID)
+        # todo: Dish
+        dOpt = dishOperator(resturantName=self.resturantName, password=self.password)
+        # dOpt.deleteDishItemsWithResturantID(resturantID=self.resturantID)
         # Table
         tOpt = tableOperator(resturantName=self.resturantName, password=self.password)
         tOpt.deleteTableByResturantID(resturantID=self.resturantID)
-        # Edit
-        eOpt = editOperator(resturantName=self.resturantName, password=self.password)
-        eOpt.deleteEditByResturantID(resturantID=self.resturantID)
-        # Order
-        oOpt = orderListOperator(resturantName=self.resturantName, password=self.password)
-        oOpt.deleteOrderByResturantID(resturantID=self.resturantID)
 
     # Update operator
     def updateResturantName(self, newName):
@@ -207,118 +163,6 @@ class resturantOperator():
         return email != '' and self.selectResturantIDWithEmail(email) != ''
     def identifyResturantID(self, resturantID):
         return resturantID != '' and self.selectResturantNameWithID(resturantID) != ''
-
-## -----------------------------------------------------
-## Table `TINYHIPPO`.`Menu`
-## -----------------------------------------------------
-class menuOperator:
-    def __init__(self, resturantName=None, password=None):
-        self.resturantID = None
-        self.hasSignedIn = False
-        if resturantName != None and password != None:
-            self.manageMenuTable(resturantName, password)
-    
-    # Sign in to manage 'Menu' table
-    def manageMenuTable(self, resturantName=None, password=None):
-        if signIn(resturantName, password):
-            rOpt = resturantOperator()
-            self.resturantName = resturantName
-            self.password = password
-            self.resturantID = rOpt.selectResturantIDWithName(resturantName)
-            self.hasSignedIn = True
-            print("[SUCCESS] '%s' Sign In Menu!" % resturantName)
-        else:
-            print('[FAILED] Username is not existed or password is wrong.')
-
-    # Insert operator
-    def insertMenuItem(self, menuTitle):
-        if self.hasSignedIn:
-            if not self.identifyMenuTitle(menuTitle):
-                sql = """INSERT INTO Menu(menuTitle, resturantID)
-                           VALUES ('%s', %d);""" % (menuTitle, self.resturantID)
-                executeSQL(sql)
-                print("[SUCCESS] MenuTitle '%s' has been inserted to menu." % menuTitle)
-            else:
-                print("[FAILED] MenuTitle '%s' has been created." % menuTitle)
-        else:
-            print('[FAILED] Please sign in first.')
-
-    # Delete operator
-    def deleteMenuByID(self, menuID):
-        if self.hasSignedIn:
-            if self.identifyMenuID(menuID):
-                self.deleteMenuForeignKey(menuID)
-                menuTitle = self.selectMenuTitleWithID(menuID)
-                sql = """DELETE FROM Menu
-                           WHERE menuID=%d;""" % menuID
-                executeSQL(sql)
-                print("[SUCCESS] MenuTitle '%s' has been deleted." % menuTitle)
-            else:
-                print("[FAILED] MenuID '%d' is not existed." % menuID)
-        else:
-            print('[FAILED] Please sign in first.')
-    def deleteMenuByTitle(self, menuTitle):
-        if self.hasSignedIn:
-            menuID = self.selectMenuIDWithTitle(menuTitle, self.resturantID)
-            self.deleteMenuByID(menuID)
-        else:
-            print('[FAILED] Please sign in first.')
-    def deleteMenuByResturantID(self, resturantID):
-        if self.hasSignedIn:
-            menuIDs = self.selectMenuIDsWithResturantID(resturantID)
-            for menuID in menuIDs:
-                self.deleteMenuByID(menuID)
-            print("[SUCCESS] Delete all resturantID '%d' in Menu." % resturantID)
-        else:
-            print('[FAILED] Please sign in first.')
-    def deleteMenuForeignKey(self, menuID):
-        # todo: Dish
-        dOpt = dishOperator(self.resturantName, self.password)
-        dOpt.deleteDishItemsWithMenuID(menuID)
-
-    # Update operator
-    def updateMenuTitle(self, oldTitle, newTitle):
-        if self.hasSignedIn:
-            if self.identifyMenuTitle(oldTitle):
-                if not self.identifyMenuTitle(newTitle):
-                    sql = """UPDATE Menu
-                               SET menuTitle='%s'
-                               WHERE resturantID=%d AND menuTitle='%s';""" % (newTitle, self.resturantID, oldTitle)
-                    executeSQL(sql)
-                    print("[SUCCESS] MenuTitle has been updated to '%s'." % newTitle)
-                else:
-                    print("[FAILED] MenuTitle '%s' has been created." % newTitle)
-            else:
-                print("[FAILED] MenuTitle '%s' is not existed." % oldTitle)
-        else:
-            print('[FAILED] Please sign in first.')
-
-    # Select operator
-    def selectMenuIDWithTitle(self, menuTitle, resturantID):
-        sql = """SELECT menuID FROM Menu
-                   WHERE resturantID=%d AND menuTitle='%s'""" % (resturantID, menuTitle)
-        return getUniqueResult(sql)
-    def selectMenuTitleWithID(self, menuID):
-        sql = """SELECT menuTitle FROM Menu
-                   WHERE menuID=%d""" % (menuID)
-        return getUniqueResult(sql)
-    def selectResturantIDWithMenuID(self, menuID):
-        sql = """SELECT resturantID FROM Menu
-                WHERE menuID=%d""" % (menuID)
-        return getUniqueResult(sql)
-    def selectMenuIDsWithResturantID(self, resturantID):
-        sql = """SELECT menuID FROM Menu
-                   WHERE resturantID=%d""" % (resturantID)
-        return getResultSet(sql)
-
-    def identifyMenuTitle(self, menuTitle):
-        if self.hasSignedIn:
-            return menuTitle != '' and self.selectMenuIDWithTitle(menuTitle, self.resturantID) != ''
-        else:
-            print('[FAILED] Please sign in first.')
-            return False
-    def identifyMenuID(self, menuID):
-        return menuID != '' and self.selectMenuTitleWithID(menuID) != ''
 
 ## -----------------------------------------------------
 ## Table `TINYHIPPO`.`DishType`
@@ -424,7 +268,7 @@ class dishTypeOperator:
         return dishTypeID != '' and self.selectDishTypeNameWithID(dishTypeID) != ''
 
 ## -----------------------------------------------------
-## Table `TINYHIPPO`.`Table`
+## Table `TINYHIPPO`.`ResturantTable`
 ## -----------------------------------------------------
 class tableOperator:
     def __init__(self, resturantName=None, password=None):
@@ -448,8 +292,8 @@ class tableOperator:
     def insertTableItem(self, tableNumber):
         if self.hasSignedIn:
             if not self.identifyTableNumber(tableNumber):
-                sql = """INSERT INTO ResturantTable(tableNumber, resturantID)
-                           VALUES (%d, %d);""" % (tableNumber, self.resturantID)
+                sql = """INSERT INTO ResturantTable(tableNumber, currentOrderNumber, resturantID)
+                           VALUES (%d, %d);""" % (tableNumber, -1, self.resturantID)
                 executeSQL(sql)
                 print("[SUCCESS] TableNumber '%d' has been inserted to ResturantTable." % tableNumber)
             else:
@@ -493,9 +337,6 @@ class tableOperator:
         # Delete QRlink Items By TableID
         qOpt = QRlinkOperator(resturantName=self.resturantName, password=self.password)
         qOpt.deleteLinkByTableID(tableID)
-        # Delete Customer Items By TableID
-        cOpt = customerOperator()
-        cOpt.deleteCustomerItemsByTableID(tableID)
 
     # Update operator
     def updateTableByNumber(self, oldNumber, newNumber):
@@ -513,6 +354,18 @@ class tableOperator:
                 print("[FAILED] TableNumber '%d' is not existed." % oldNumber)
         else:
             print('[FAILED] Please sign in first.')
+    def updateCurrentOrderNumberByTableID(self, currentOrderNumber, tableID):
+        if self.hasSignedIn:
+            if self.identifyAvailableTableID(tableID):
+                sql = """UPDATE ResturantTable
+                           SET currentOrderNumber=%d
+                           WHERE resturantID=%d AND tableID=%d;""" % (currentOrderNumber, self.resturantID, tableID)
+                executeSQL(sql)
+                print("[SUCCESS] currentOrderNumber has been updated to '%s'." % currentOrderNumber)
+            else:
+                print("[FAILED] Table ID '%d' is not available." % tableID)
+        else:
+            print('[FAILED] Please sign in first.')
 
     # Select operator
     def selectTableIDWithNumber(self, tableNumber, resturantID):
@@ -527,10 +380,17 @@ class tableOperator:
         sql = """SELECT tableID FROM ResturantTable
                    WHERE resturantID=%d""" % (resturantID)
         return getResultSet(sql)
+    def selectAvailableTableIDsWithResturantID(self, resturantID):
+        sql = """SELECT tableID FROM ResturantTable
+                   WHERE resturantID=%d and currentOrderNumber=%d""" % (resturantID, -1)
+        return getResultSet(sql)
     def identifyTableNumber(self, number):
         return number != '' and self.selectTableIDWithNumber(number, self.resturantID) != ''
     def identifyTableID(self, tableID):
         return tableID != '' and self.selectTableNumberWithID(tableID) != ''
+    def identifyAvailableTableID(self, tableID):
+        return tableID != '' and self.selectAvailableTableIDsWithResturantID(self.resturantID) != []
+
 
 ## -----------------------------------------------------
 ## Table `TINYHIPPO`.`QRlink`
@@ -659,213 +519,6 @@ class QRlinkOperator:
         return linkID != '' and linkID != '' and self.selectURLWithID(linkID) != ''
 
 ## -----------------------------------------------------
-## Table `TINYHIPPO`.`EditRelation`
-## -----------------------------------------------------
-class editOperator:
-    def __init__(self, resturantName=None, password=None):
-        self.resturantID = None
-        self.hasSignedIn = False
-        if resturantName != None and password != None:
-            self.manageEditTable(resturantName, password)
-    
-    # Sign in to manage 'Edit' table
-    def manageEditTable(self, resturantName=None, password=None):
-        if signIn(resturantName, password):
-            rOpt = resturantOperator()
-            self.resturantID = rOpt.selectResturantIDWithName(resturantName)
-            self.hasSignedIn = True
-            self.resturantName = resturantName
-            self.password = password
-            print("[SUCCESS] '%s' Sign In Edit!" % resturantName)
-        else:
-            print('[FAILED] Username is not existed or password is wrong.')
-
-    # Insert operator
-    def insertEditItem(self, customerName, orderNumber):
-        if self.hasSignedIn:
-            # get customerID
-            cOpt = customerOperator()
-            customerID = cOpt.selectCustomerIDWithName(customerName)
-            if cOpt.identifyCustomerID(customerID):
-                if not self.identifyEditItemWithCustomerID(customerID):
-                    # create OrderList Item and get orderID
-                    oOpt = orderListOperator(resturantName=self.resturantName, password=self.password)
-                    if not oOpt.identifyOrderNumber(orderNumber=orderNumber):
-                        orderDishes = ''
-                        total = 0.0
-                        orderNumber = oOpt.insertOrderItem(orderDishes=orderDishes, total=total)
-                    orderID = oOpt.selectOrderIDWithOrderNumber(orderNumber=orderNumber)
-
-                    now = getNow()
-                    sql = """INSERT INTO EditRelation(customerID, orderID, editedTime, resturantID)
-                                VALUES (%d, %d, '%s', %d);""" % (customerID, orderID, now, self.resturantID)
-                    executeSQL(sql)
-                    print("[SUCCESS] CustomerName '%s' begins to edit orderNumber '%d' at '%s'." % (customerName, orderNumber, now))
-                else:
-                    print("[FAILED] CustomerName '%s' has order unpaid." % (customerName))
-            else:
-                print("[FAILED] CustomerName '%s' is not existed." % customerName)
-        else:
-            print('[FAILED] Please sign in first.')
-    
-    # Delete operator
-    def deleteEditItemByCustomerIDAndOrderID(self, customerID, orderID):
-        if self.hasSignedIn:
-            if self.identifyEditItem(customerID, orderID):
-                sql = """DELETE FROM EditRelation
-                            WHERE customerID=%d AND orderID=%d;""" % (customerID, orderID)
-                executeSQL(sql)
-                print("[SUCCESS] Delete Edit item which stored customerID '%d' and orderID '%d'." % (customerID, orderID))
-            else:
-                print("[FAILED] There is no Edit item which stored customerID '%d' and orderID '%d'." % (customerID, orderID))
-        else:
-            print('[FAILED] Please sign in first.')
-    def deleteEditItemByCustomerID(self, customerID):
-        if self.hasSignedIn:
-            orderIDs = self.selectOrderIDsWithCustomerID(customerID)
-            if self.identifyEditItemWithCustomerID(customerID):
-                for orderID in orderIDs:
-                    self.deleteEditItemByCustomerIDAndOrderID(customerID, orderID)
-                print("[SUCCESS] Delete all Edit items which stored customerID '%d'." % customerID)
-            else:
-                print("[FAILED] There is no Edit item which stored customerID '%d'." % customerID)
-        else:
-            print('[FAILED] Please sign in first.')
-    def deleteEditItemByOrderID(self, orderID):
-        if self.hasSignedIn:
-            customerIDs = self.selectCustomerIDsWithOrderID(orderID)
-            if self.identifyEditItemWithOrderID(orderID):
-                for customerID in customerIDs:
-                    self.deleteEditItemByCustomerIDAndOrderID(customerID, orderID)
-                print("[SUCCESS] Delete all Edit items which stored orderID '%d'." % orderID)
-            else:
-                print("[FAILED] There is no Edit item which stored orderID '%d'." % orderID)
-        else:
-            print('[FAILED] Please sign in first.')
-    def deleteEditByResturantID(self, resturantID):
-        if self.hasSignedIn:
-            sql = """DELETE FROM EditRelation
-                        WHERE resturantID=%d;""" % (self.resturantID)
-            executeSQL(sql)
-            print("[SUCCESS] Delete Edit item which stored resturantID '%d'." % (self.resturantID))
-        else:
-            print('[FAILED] Please sign in first.')
-
-    # Update operator
-    def updateOrderDishes(self, customerName, orderNumber, newOrderDishes, total):
-        if self.hasSignedIn:
-            # get customerID
-            cOpt = customerOperator()
-            customerID = cOpt.selectCustomerIDWithName(customerName)
-            if cOpt.identifyCustomerID(customerID):
-                if self.identifyEditItemWithCustomerID(customerID):
-                    # create OrderList Item and get orderID
-                    oOpt = orderListOperator(resturantName=self.resturantName, password=self.password)
-                    if oOpt.identifyOrderNumber(orderNumber=orderNumber):
-                        now = getNow()
-                        # todo: collision
-                        orderID = oOpt.selectOrderIDWithOrderNumber(orderNumber=orderNumber)
-                        oOpt.updateOrderDishes(newOrderDishes=newOrderDishes, total=total, orderID=orderID)
-                        oOpt.updateIsPaid(isPaid='False', orderID=orderID)
-                        # update the time
-                        self.updateEditTime(editedTime=now, customerID=customerID, orderID=orderID)
-                        print("[SUCCESS] CustomerName '%s' updated OrderDishes of OrderNumber '%d' at '%s'." % (customerName, orderNumber, now))
-                    else:
-                        print("[FAILED] orderNumber '%d' is not existed." % (orderNumber))
-                else:
-                    print("[FAILED] CustomerName '%s' is not existed." % (customerName))
-            else:
-                print("[FAILED] CustomerName '%s' is not existed." % customerName)
-        else:
-            print('[FAILED] Please sign in first.')
-
-    def updateIsPaid(self, isPaid, customerName, orderNumber):
-        if self.hasSignedIn:
-            # get customerID
-            cOpt = customerOperator()
-            customerID = cOpt.selectCustomerIDWithName(customerName)
-            if cOpt.identifyCustomerID(customerID):
-                if self.identifyEditItemWithCustomerID(customerID):
-                    # create OrderList Item and get orderID
-                    oOpt = orderListOperator(resturantName=self.resturantName, password=self.password)
-                    if oOpt.identifyOrderNumber(orderNumber=orderNumber):
-                        now = getNow()
-                        # todo: collision
-                        orderID = oOpt.selectOrderIDWithOrderNumber(orderNumber=orderNumber)
-                        oOpt.updateIsPaid(isPaid=isPaid, orderID=orderID)
-                        # update the time
-                        self.updateEditTime(editedTime=now, customerID=customerID, orderID=orderID)
-                        print("[SUCCESS] CustomerName '%s' updated IsPaid of OrderNumber '%d' to '%s' at '%s' ." % (customerName, orderNumber, isPaid, now))
-                    else:
-                        print("[FAILED] orderNumber '%d' is not existed." % (orderNumber))
-                else:
-                    print("[FAILED] CustomerName '%s' is not existed." % (customerName))
-            else:
-                print("[FAILED] CustomerName '%s' is not existed." % customerName)
-        else:
-            print('[FAILED] Please sign in first.')
-
-    def updateStatusToDone(self, customerName, orderNumber):
-        if self.hasSignedIn:
-            # get customerID
-            cOpt = customerOperator()
-            customerID = cOpt.selectCustomerIDWithName(customerName)
-            if cOpt.identifyCustomerID(customerID):
-                if self.identifyEditItemWithCustomerID(customerID):
-                    # create OrderList Item and get orderID
-                    oOpt = orderListOperator(resturantName=self.resturantName, password=self.password)
-                    if oOpt.identifyOrderNumber(orderNumber=orderNumber):
-                        now = getNow()
-                        # todo: collision
-                        orderID = oOpt.selectOrderIDWithOrderNumber(orderNumber=orderNumber)
-                        oOpt.updateStatusToDone(orderID=orderID)
-                        print("[SUCCESS] orderNumber '%d' has Done at '%s'." % (orderNumber, now))
-                        self.deleteEditItemByOrderID(orderID=orderID)
-                    else:
-                        print("[FAILED] orderNumber '%d' is not existed." % (orderNumber))
-                else:
-                    print("[FAILED] CustomerName '%s' is not existed." % (customerName))
-            else:
-                print("[FAILED] CustomerName '%s' is not existed." % customerName)
-        else:
-            print('[FAILED] Please sign in first.')
-
-    def updateEditTime(self, editedTime, customerID, orderID):
-        if self.hasSignedIn:
-            if self.identifyEditItem(customerID, orderID):
-                now = getNow()
-                sql = """UPDATE EditRelation
-                            SET editedTime='%s'
-                            WHERE customerID=%d AND orderID=%d;""" % (now, customerID, orderID)
-                executeSQL(sql)
-                print("[SUCCESS] The Edit item has updated at '%s'. [customerID '%d' and orderID '%d']" % (now, customerID, orderID))
-            else:
-                print("[FAILED] There is no Edit item which stored customerID '%d' and orderID '%d'." % (customerID, orderID))
-        else:
-            print('[FAILED] Please sign in first.')
-
-    # Select operator
-    def selectCustomerIDsWithOrderID(self, orderID):
-        sql = """SELECT customerID FROM EditRelation
-                   WHERE orderID=%d""" % (orderID)
-        return getResultSet(sql)
-    def selectOrderIDsWithCustomerID(self, customerID):
-        sql = """SELECT orderID FROM EditRelation
-                   WHERE customerID=%d""" % (customerID)
-        return getResultSet(sql)
-    def selectEditedTimeWithCustomerIDAndOrderID(self, customerID, orderID):
-        sql = """SELECT editedTime FROM EditRelation
-                   WHERE customerID=%d AND orderID=%d""" % (customerID, orderID)
-        return getUniqueResult(sql)
-
-    def identifyEditItem(self, customerID, orderID):
-        return self.selectEditedTimeWithCustomerIDAndOrderID(customerID, orderID) != ''
-    def identifyEditItemWithCustomerID(self, customerID):
-        return self.selectOrderIDsWithCustomerID(customerID) != []
-    def identifyEditItemWithOrderID(self, orderID):
-        return self.selectCustomerIDsWithOrderID(orderID) != []
-
-## -----------------------------------------------------
 ## Table `TINYHIPPO`.`Customer`
 ## -----------------------------------------------------
 class customerOperator:
@@ -957,143 +610,117 @@ class customerOperator:
 ## Table `TINYHIPPO`.`OrderList`
 ## -----------------------------------------------------
 class orderListOperator:
-    def __init__(self, resturantName=None, password=None):
-        self.resturantID = None
-        self.hasSignedIn = False
-        if resturantName != None and password != None:
-            self.manageOrderListTable(resturantName, password)
-    
-    # Sign in to manage 'OrderList' table
-    def manageOrderListTable(self, resturantName=None, password=None):
-        if signIn(resturantName, password):
-            rOpt = resturantOperator()
-            self.resturantID = rOpt.selectResturantIDWithName(resturantName)
-            self.hasSignedIn = True
-            self.resturantName=resturantName
-            self.password = password
-            print("[SUCCESS] '%s' Sign In OrderList!" % resturantName)
-        else:
-            print('[FAILED] Username is not existed or password is wrong.')
-
     # Insert operator
-    def insertOrderItem(self, orderDishes, total):
+    def insertOrderItem(self, orderDetail, total, tableID, customerID):
         '''
         Input:
             orderDishes: the json of dishes in the order
             total: the total of the order
         '''
-        if self.hasSignedIn:
-            # initialize param
-            status = 'todo'
-            isPaid = 'False'
-            # determine orderNumber
-            orderNumber = self.getMaxNumber() + 1
-            sql = """INSERT INTO OrderList(orderNumber, orderDishes, status, total, isPaid, resturantID)
-                    VALUES (%d, '%s', '%s', %f, '%s', %d);""" % (orderNumber, orderDishes, status, total, isPaid, self.resturantID)
-            executeSQL(sql)
-            print("[SUCCESS] A new Order '%d' has been inserted to Table." % orderNumber)
-            return orderNumber
-        else:
-            print('[FAILED] Please sign in first.')
-            return 0
+        # determine orderNumber
+        now = getNow()
+        # todo: collision
+        orderNumber = self.getMaxNumber() + 1
+        sql = """INSERT INTO OrderList(orderNumber, orderDetail, total, isPaid, status, editedTime, tableID, customerID)
+                    VALUES (%d, '%s', %f, %d, '%s', '%s', %d, %d);""" % (orderNumber, orderDetail, total, 'False', 'todo', now, tableID, customerID)
+        executeSQL(sql)
+        print("[SUCCESS] A new Order '%d' has been inserted to Table." % orderNumber)
+        return orderNumber
+
     # Delete operator
     def deleteOrderItemWithOrderID(self, orderID):
-        if self.hasSignedIn:
-            if self.identifyOrderID(orderID):
+        if self.identifyOrderID(orderID):
+            sql = """DELETE FROM OrderList
+                        WHERE orderID=%d;""" % orderID
+            executeSQL(sql)
+            print("[SUCCESS] The OrderID '%d' has been deleted." % orderID)
+        else:
+            print("[FAILED] OrderID '%d' is not existed." % orderID)
+    def deleteOrderItemsWithTableID(self, tableID, resturantName, password):
+        if signIn(resturantName=resturantName, password=password):
+            tOpt = tableOperator(resturantName=resturantName, password=password)
+            if tOpt.identifyTableID(tableID=tableID):
                 sql = """DELETE FROM OrderList
-                        WHERE orderID=%d AND resturantID=%d;""" % (orderID, self.resturantID)
+                        WHERE tableID=%d;""" % tableID
                 executeSQL(sql)
-                print("[SUCCESS] The OrderID '%d' has been deleted." % orderID)
+                print("[SUCCESS] Delete OrderList items which stored tableID '%d'." % tableID)
             else:
-                print("[FAILED] OrderID '%d' is not existed." % orderID)
+                print("[FAILED] TableID '%d' is not existed." % tableID)
         else:
             print('[FAILED] Please sign in first.')
-    def deleteOrderByResturantID(self, resturantID):
-        if self.hasSignedIn:
-            sql = """DELETE FROM OrderList
-                        WHERE resturantID=%d;""" % (self.resturantID)
-            executeSQL(sql)
-            print("[SUCCESS] Delete OrderList item which stored resturantID '%d'." % (self.resturantID))
+    def deleteOrderItemsWithCustomerID(self, customerID, resturantName, password):
+        if signIn(resturantName=resturantName, password=password):
+            cOpt = customerOperator()
+            if cOpt.identifyCustomerID(customerID=customerID):
+                sql = """DELETE FROM OrderList
+                        WHERE customerID=%d;""" % customerID
+                executeSQL(sql)
+                print("[SUCCESS] Delete OrderList items which stored customerID '%d'." % customerID)
+            else:
+                print("[FAILED] CustomerID '%d' is not existed." % customerID)
         else:
             print('[FAILED] Please sign in first.')
 
     # Update operator
-    def updateOrderDishes(self, newOrderDishes, total, orderID):
-        if self.hasSignedIn:
-            if self.identifyOrderID(orderID):
-                sql = """UPDATE OrderList
-                        SET orderDishes='%s', total=%f
-                        WHERE orderID=%d AND resturantID=%d;""" % (newOrderDishes, total, orderID, self.resturantID)
-                executeSQL(sql)
-                print("[SUCCESS] The orderDishes of OrderID '%d' has been updated." % (orderID))
-            else:
-                print("[FAILED] OrderID '%d' is not existed." % orderID)
+    def updateOrderDetail(self, newOrderDetail, total, orderID):
+        if self.identifyOrderID(orderID):
+            now = getNow()
+            sql = """UPDATE OrderList
+                       SET orderDetail='%s', total=%f, editedTime='%s'
+                       WHERE orderID=%d;""" % (newOrderDetail, total, now, orderID)
+            executeSQL(sql)
+            print("[SUCCESS] The orderDishes of OrderID '%d' has been updated." % (orderID))
         else:
-            print('[FAILED] Please sign in first.')
-
+            print("[FAILED] OrderID '%d' is not existed." % orderID)
     def updateTotal(self, total, orderID):
-        if self.hasSignedIn:
-            if self.identifyOrderID(orderID):
+        if self.identifyOrderID(orderID):
+            now = getNow()
+            sql = """UPDATE OrderList
+                       SET total=%f, editedTime='%s'
+                       WHERE orderID=%d;""" % (total, now, orderID)
+            executeSQL(sql)
+            print("[SUCCESS] The total of OrderID '%d' has been updated to '%.2f'." % (orderID, total))
+        else:
+            print("[FAILED] OrderID '%d' is not existed." % orderID)
+    def updateStatus(self, status, orderID):
+        if status not in ['todo', 'doing', 'done']:
+            print("[FAILED] The status '%s' is invalid." % status)
+        if self.identifyOrderID(orderID):
+            if self.identifyIsPaid(orderID):
                 sql = """UPDATE OrderList
-                        SET total=%f
-                        WHERE orderID=%d AND resturantID=%d;""" % (total, orderID, self.resturantID)
+                           SET status='%s'
+                           WHERE orderID=%d;""" % (status, orderID)
                 executeSQL(sql)
-                print("[SUCCESS] The total of OrderID '%d' has been updated to '%.2f'." % (orderID, total))
+                print("[SUCCESS] The Status of OrderID '%d' has been updated to '%s'." % (orderID, status))
             else:
-                print("[FAILED] OrderID '%d' is not existed." % orderID)
+                print("[FAILED] OrderID '%d' has not been paid." % orderID)
         else:
-            print('[FAILED] Please sign in first.')
-    
-    def updateStatusToDone(self, orderID):
-        if self.hasSignedIn:
-            if self.identifyOrderID(orderID):
-                if self.identifyIsPaid(orderID):
-                    status = 'done'
-                    sql = """UPDATE OrderList
-                            SET status='%s'
-                            WHERE orderID=%d AND resturantID=%d;""" % (status, orderID, self.resturantID)
-                    executeSQL(sql)
-                    print("[SUCCESS] The Status of OrderID '%d' has been updated to '%s'." % (orderID, status))
-                else:
-                    print("[FAILED] OrderID '%d' has not been paid." % orderID)
-            else:
-                print("[FAILED] OrderID '%d' is not existed." % orderID)
-        else:
-            print('[FAILED] Please sign in first.')
-
+            print("[FAILED] OrderID '%d' is not existed." % orderID)
     def updateIsPaid(self, isPaid, orderID):
-        if self.hasSignedIn:
-            if self.identifyOrderID(orderID):
-                status = 'doing' if isPaid == 'True' else 'todo'
-                sql = """UPDATE OrderList
-                        SET status='%s', isPaid='%s'
-                        WHERE orderID=%d;""" % (status, isPaid, orderID)
-                executeSQL(sql)
-                print("[SUCCESS] IsPaid of OrderID '%d' has been updated to '%s'." % (orderID, isPaid))
-            else:
-                print("[FAILED] OrderID '%d' is not existed." % orderID)
+        if self.identifyOrderID(orderID):
+            sql = """UPDATE OrderList
+                        SET isPaid=%d
+                        WHERE orderID=%d;""" % (isPaid, orderID)
+            executeSQL(sql)
+            print("[SUCCESS] IsPaid of OrderID '%d' has been updated to '%s'." % (orderID, isPaid))
         else:
-            print('[FAILED] Please sign in first.')
+            print("[FAILED] OrderID '%d' is not existed." % orderID)
 
     # Select operator
     def selectOrderIDWithOrderNumber(self, orderNumber):
-        if self.hasSignedIn:
-            sql = """SELECT orderID FROM OrderList
-                       WHERE orderNumber=%d AND resturantID=%d;""" % (orderNumber, self.resturantID)
-            return getUniqueResult(sql)
-        else:
-            print('[FAILED] Please sign in first.')
-            return ''
-    def selectOrderIDsWithResturantID(self):
-        if self.hasSignedIn:
-            sql = """SELECT orderID FROM OrderList
-                    WHERE resturantID=%d;""" % self.resturantID
-            return getResultSet(sql)
-        else:
-            print('[FAILED] Please sign in first.')
-            return []
-    def selectOrderDishesWithOrderID(self, orderID):
-        sql = """SELECT orderDishes FROM OrderList
+        sql = """SELECT orderID FROM OrderList
+                   WHERE orderNumber=%d;""" % orderNumber
+        return getUniqueResult(sql)
+    def selectOrderIDsWithTableID(self, tableID):
+        sql = """SELECT orderID FROM OrderList
+                    WHERE tableID=%d;""" % tableID
+        return getResultSet(sql)
+    def selectOrderIDsWithCustomerID(self, customerID):
+        sql = """SELECT orderID FROM OrderList
+                   WHERE customerID=%d;""" % customerID
+        return getResultSet(sql)
+    def selectOrderDetailWithOrderID(self, orderID):
+        sql = """SELECT orderDetail FROM OrderList
                    WHERE orderID=%d;""" % (orderID)
         return getUniqueResult(sql)
     def selectStatusWithOrderID(self, orderID):
@@ -1116,13 +743,9 @@ class orderListOperator:
     def identifyOrderNumber(self, orderNumber):
         return self.selectOrderIDWithOrderNumber(orderNumber) != ''
     def getMaxNumber(self):
-        if self.hasSignedIn:
-            sql = """SELECT MAX(orderNumber) FROM OrderList"""
-            number = getUniqueResult(sql)
-            return 0 if number == None else int(number)
-        else:
-            print('[FAILED] Please sign in first.')
-            return 0
+        sql = """SELECT MAX(orderNumber) FROM OrderList"""
+        number = getUniqueResult(sql)
+        return 0 if number == None else int(number)
     
 
 ## -----------------------------------------------------
@@ -1141,38 +764,33 @@ class dishOperator:
             rOpt = resturantOperator(resturantName, password)
             self.resturantID = rOpt.selectResturantIDWithName(resturantName)
             self.hasSignedIn = True
+            self.resturantName = resturantName
+            self.password = password
             print("[SUCCESS] '%s' Sign In Dish!" % resturantName)
         else:
             print('[FAILED] Username is not existed or password is wrong.')
 
     # Insert operator
-    def insertDishItem(self, dishName='', price=0, dishImageURL='', dishTypeName='', menuTitle=''):
+    def insertDishItem(self, dishName, price, dishImageURL, dishTypeID):
         if self.hasSignedIn:
-            # get dishTypeID
-            dtOpt = dishTypeOperator()
-            dishTypeID = dtOpt.selectDishTypeIDWithName(dishTypeName, self.resturantID)
-            # get menuID
-            mOpt = menuOperator()
-            menuID = mOpt.selectMenuIDWithTitle(menuTitle, self.resturantID)
-            if not self.identifyDishName(dishName, menuID):
-                dishComment=''
-                dishHot=0
-                monthlySales=0
-                sql = """INSERT INTO Dish(dishName, price, dishImageURL, dishComment, dishHot, monthlySales, dishTypeID, menuID)
-                           VALUES ('%s', %f, '%s', '%s', %d, %d, %d, %d);""" % (dishName, float(price), dishImageURL, dishComment, dishHot, monthlySales, dishTypeID, menuID)
+            # get dishTypeName
+            dtOpt = dishTypeOperator(resturantName=self.resturantName, password=self.password)
+            dishtypeName = dtOpt.selectDishTypeNameWithID(dishTypeID=dishTypeID)
+            if dtOpt.identifyDishTypeID(dishTypeID=dishTypeID):
+                sql = """INSERT INTO Dish(dishName, onSale, price, dishImageURL, dishComment, dishHot, monthlySales, resturantID, dishTypeID)
+                           VALUES ('%s', %f, '%s', '%s', %d, %d, %d, %d);""" % (dishName, float(price), '', '', 0, 0, self.resturantID, dishTypeID)
                 executeSQL(sql)
-                print("[SUCCESS] A new Dish '%s' has been inserted." % dishName)
+                print("[SUCCESS] A new Dish '%s' has been inserted into Dishtype '%s'." % (dishName, dishtypeName))
             else:
-                print("[FAILED] DishName '%s' has been created in Menu '%s'" % (dishName, menuTitle))
+                print("[FAILED] Dish '%s' has been created in Dishtype '%s'" % (dishName, dishtypeName))
         else:
             print('[FAILED] Please sign in first.')
     
     # Delete operator
     def deleteDishItemWithDishID(self, dishID):
         if self.hasSignedIn:
-            menuID = self.selectMenuIDWithDishID(dishID)
-            if self.identifyDishID(dishID, menuID):
-                dishName = self.selectDishNameWithDishID(dishID, menuID)
+            if self.identifyDishID(dishID):
+                dishName = self.selectDishNameWithDishID(dishID)
                 sql = """DELETE FROM Dish
                            WHERE dishID=%d;""" % dishID
                 executeSQL(sql)
@@ -1181,25 +799,11 @@ class dishOperator:
                 print("[FAILED] DishID '%d' is not existed." % dishID)
         else:
             print('[FAILED] Please sign in first.')
-    def deleteDishItemsWithMenuID(self, menuID):
-        if self.hasSignedIn:
-            dishIDs = self.selectDishIDsWithMenuID(menuID)
-            if dishIDs != []:
-                # get menuID
-                mOpt = menuOperator()
-                menuTitle = mOpt.selectMenuTitleWithID(menuID)
-                for dishID in dishIDs:
-                    self.deleteDishItemWithDishID(dishID)
-                print("[SUCCESS] All Dishes in Menu '%s' have been deleted." % menuTitle)
-            else:
-                print("[FAILED] There is no dish in Menu '%d'." % menuID)
-        else:
-            print('[FAILED] Please sign in first.')
     def deleteDishItemsWithDishTypeID(self, dishTypeID):
         if self.hasSignedIn:
             dishIDs = self.selectDishIDsWithDishTypeID(dishTypeID)
             if dishIDs != []:
-                # get menuID
+                # get dishTypeName
                 dtOpt = dishTypeOperator()
                 dishTypeName = dtOpt.selectDishTypeNameWithID(dishTypeID)
                 for dishID in dishIDs:
@@ -1209,110 +813,120 @@ class dishOperator:
                 print("[FAILED] There is no dish in DishType '%d'." % dishTypeID)
         else:
             print('[FAILED] Please sign in first.')
+    def deleteDishItemsWithResturantID(self, resturantID):
+        if self.hasSignedIn:
+            dishIDs = self.selectDishIDsWithResturantID(resturantID)
+            if dishIDs != []:
+                for dishID in dishIDs:
+                    self.deleteDishItemWithDishID(dishID)
+                print("[SUCCESS] All Dishes in Resturant '%s' have been deleted." % self.resturantName)
+            else:
+                print("[FAILED] There is no dish in ResturantID '%d'." % resturantID)
+        else:
+            print('[FAILED] Please sign in first.')
     
     # Update operator
-    def updateDishName(self, oldDishName, newDishName, menuTitle):
+    def updateDishName(self, newDishName, dishID):
         if self.hasSignedIn:
-            # get menuID
-            mOpt = menuOperator()
-            menuID = mOpt.selectMenuIDWithTitle(menuTitle, self.resturantID)
-            if self.identifyDishName(oldDishName, menuID):
+            if self.identifyDishID(dishID):
+                dishName = self.selectDishNameWithDishID(dishID)
                 sql = """UPDATE Dish
                             SET dishName='%s'
-                            WHERE dishName='%s' AND menuID=%d;""" % (newDishName, oldDishName, menuID)
+                            WHERE dishID=%d;""" % (newDishName, dishID)
                 executeSQL(sql)
-                print("[SUCCESS] The DishName has updated to '%s'." % newDishName)
+                print("[SUCCESS] The name of Dish '%s' has updated to '%s'." % (dishName, newDishName))
             else:
-                print("[FAILED] DishName '%s' is not existed in Menu '%s'." % (oldDishName, menuTitle))
+                print("[FAILED] DishID '%d' is not existed." % dishID)
         else:
             print('[FAILED] Please sign in first.')
-    def updatePrice(self, newPrice, dishName, menuTitle):
+    
+    def updateOnSaleWithDishID(self, onSale, dishID):
         if self.hasSignedIn:
-            # get menuID
-            mOpt = menuOperator()
-            menuID = mOpt.selectMenuIDWithTitle(menuTitle, self.resturantID)
-            # get dishID
-            dishID = self.selectDishIDWithDishName(dishName, menuID)
-            if self.identifyDishName(dishName, menuID):
+            if self.identifyDishID(dishID):
+                sql = """UPDATE Dish
+                            SET onSale=%d
+                            WHERE dishID=%d;""" % (onSale, dishID)
+                executeSQL(sql)
+                dishName = self.selectDishNameWithDishID(dishID)
+                onSale_str = 'True' if onSale == True else 'False'
+                print("[SUCCESS] The onSale of Dish '%s' has updated to '%s'." % (dishName, onSale_str))
+            else:
+                print("[FAILED] DishID '%d' is not existed." % dishID)
+        else:
+            print('[FAILED] Please sign in first.')
+    def updatePriceWithDishID(self, newPrice, dishID):
+        if self.hasSignedIn:
+            if self.identifyDishID(dishID):
                 sql = """UPDATE Dish
                             SET price=%f
-                            WHERE dishID=%d AND menuID=%d;""" % (newPrice, dishID, menuID)
+                            WHERE dishID=%d;""" % (newPrice, dishID)
                 executeSQL(sql)
-                print("[SUCCESS] The price of Dish '%s' in Menu '%s' has updated to %.2f." % (dishName, menuTitle, newPrice))
+                dishName = self.selectDishNameWithDishID(dishID)
+                print("[SUCCESS] The price of Dish '%s' has updated to %.2f." % (dishName, newPrice))
             else:
-                print("[FAILED] DishName '%s' is not existed in Menu '%s'." % (dishName, menuTitle))
+                print("[FAILED] DishID '%d' is not existed." % dishID)
         else:
             print('[FAILED] Please sign in first.')
-    def updateDishImageURL(self, newDishImageURL, dishName, menuTitle):
+    def updateDishImageURLWithDishID(self, newDishImageURL, dishID):
         if self.hasSignedIn:
-            # get menuID
-            mOpt = menuOperator()
-            menuID = mOpt.selectMenuIDWithTitle(menuTitle, self.resturantID)
-            # get dishID
-            dishID = self.selectDishIDWithDishName(dishName, menuID)
-            if self.identifyDishName(dishName, menuID):
+            if self.identifyDishID(dishID):
                 sql = """UPDATE Dish
                             SET dishImageURL='%s'
-                            WHERE dishID=%d AND menuID=%d;""" % (newDishImageURL, dishID, menuID)
+                            WHERE dishID=%d;""" % (newDishImageURL, dishID)
                 executeSQL(sql)
-                print("[SUCCESS] The ImageURL of Dish '%s' in Menu '%s' has updated to '%s'." % (dishName, menuTitle, newDishImageURL))
+                dishName = self.selectDishNameWithDishID(dishID)
+                print("[SUCCESS] The ImageURL of Dish '%s' has updated." % dishName)
             else:
-                print("[FAILED] DishName '%s' is not existed in Menu '%s'." % (dishName, menuTitle))
+                print("[FAILED] DishID '%d' is not existed." % dishID)
         else:
             print('[FAILED] Please sign in first.')
-    def updateDishComment(self, newDishComment, dishName, menuTitle):
+    def updateDishCommentWithDishID(self, newDishComment, dishID):
         if self.hasSignedIn:
-            # get menuID
-            mOpt = menuOperator()
-            menuID = mOpt.selectMenuIDWithTitle(menuTitle, self.resturantID)
-            # get dishID
-            dishID = self.selectDishIDWithDishName(dishName, menuID)
-            if self.identifyDishName(dishName, menuID):
+            if self.identifyDishID(dishID):
+                # todo: comments += newComment
                 sql = """UPDATE Dish
                             SET dishComment='%s'
-                            WHERE dishID=%d AND menuID=%d;""" % (newDishComment, dishID, menuID)
+                            WHERE dishID=%d;""" % (newDishComment, dishID)
                 executeSQL(sql)
-                print("[SUCCESS] The Comment of Dish '%s' in Menu '%s' has updated to '%s'." % (dishName, menuTitle, newDishComment))
+                dishName = self.selectDishNameWithDishID(dishID)
+                print("[SUCCESS] The Comment of Dish '%s' has updated." % dishName)
             else:
-                print("[FAILED] DishName '%s' is not existed in Menu '%s'." % (dishName, menuTitle))
+                print("[FAILED] DishID '%d' is not existed." % dishID)
         else:
             print('[FAILED] Please sign in first.')
-    def updateDishHot(self, newDishHot, dishName, menuTitle):
+    def updateDishHotWithDishID(self, newDishHot, dishID):
         if self.hasSignedIn:
-            # get menuID
-            mOpt = menuOperator()
-            menuID = mOpt.selectMenuIDWithTitle(menuTitle, self.resturantID)
-            # get dishID
-            dishID = self.selectDishIDWithDishName(dishName, menuID)
-            if self.identifyDishName(dishName, menuID):
+            if self.identifyDishID(dishID):
                 sql = """UPDATE Dish
                             SET dishHot=%d
-                            WHERE dishID=%d AND menuID=%d;""" % (newDishHot, dishID, menuID)
+                            WHERE dishID=%d;""" % (newDishHot, dishID)
                 executeSQL(sql)
-                print("[SUCCESS] The Hot of Dish '%s' in Menu '%s' has updated to '%d'." % (dishName, menuTitle, newDishHot))
+                dishName = self.selectDishNameWithDishID(dishID)
+                dishHot_str = 'True' if newDishHot == True else 'False'
+                print("[SUCCESS] The Hot of Dish '%s' has updated to '%s'." % (dishName, dishHot_str))
             else:
-                print("[FAILED] DishName '%s' is not existed in Menu '%s'." % (dishName, menuTitle))
+                print("[FAILED] DishID '%d' is not existed." % dishID)
         else:
             print('[FAILED] Please sign in first.')
-    def updateMonthlySales(self, newMonthlySales, dishName, menuTitle):
+    def updateMonthlySalesWithDishID(self, newMonthlySales, dishID):
         if self.hasSignedIn:
-            # get menuID
-            mOpt = menuOperator()
-            menuID = mOpt.selectMenuIDWithTitle(menuTitle, self.resturantID)
-            # get dishID
-            dishID = self.selectDishIDWithDishName(dishName, menuID)
-            if self.identifyDishName(dishName, menuID):
+            if self.identifyDishID(dishID):
                 sql = """UPDATE Dish
                             SET monthlySales=%d
-                            WHERE dishID=%d AND menuID=%d;""" % (newMonthlySales, dishID, menuID)
+                            WHERE dishID=%d;""" % (newMonthlySales, dishID)
                 executeSQL(sql)
-                print("[SUCCESS] The Monthly Sales of Dish '%s' in Menu '%s' has updated to '%d'." % (dishName, menuTitle, newMonthlySales))
+                dishName = self.selectDishNameWithDishID(dishID)
+                print("[SUCCESS] The Monthly Sales of Dish '%s' has updated to '%d'." % (dishName, newMonthlySales))
             else:
-                print("[FAILED] DishName '%s' is not existed in Menu '%s'." % (dishName, menuTitle))
+                print("[FAILED] DishID '%d' is not existed." % dishID)
         else:
             print('[FAILED] Please sign in first.')
     
     # Select operator
+    def selectOnSaleWithDishID(self, dishID):
+        sql = """SELECT onSale FROM Dish
+                   WHERE dishID=%d""" % dishID
+        return getUniqueResult(sql)
     def selectPriceWithDishID(self, dishID):
         sql = """SELECT price FROM Dish
                    WHERE dishID=%d""" % dishID
@@ -1334,27 +948,68 @@ class dishOperator:
                    WHERE dishID=%d""" % dishID
         return getUniqueResult(sql)
 
-    def selectDishIDWithDishName(self, dishName, menuID):
+    def selectDishIDWithDishName(self, dishName):
         sql = """SELECT dishID FROM Dish
-                   WHERE menuID=%d AND dishName='%s'""" % (menuID, dishName)
+                   WHERE resturantID=%d AND dishName='%s'""" % (self.resturantID, dishName)
         return getUniqueResult(sql)
-    def selectDishNameWithDishID(self, dishID, menuID):
+    def selectDishNameWithDishID(self, dishID):
         sql = """SELECT dishName FROM Dish
-                   WHERE menuID=%d AND dishID=%d""" % (menuID, dishID)
-        return getUniqueResult(sql)
-    def selectMenuIDWithDishID(self, dishID):
-        sql = """SELECT menuID FROM Dish
                    WHERE dishID=%d""" % dishID
         return getUniqueResult(sql)
-    def selectDishIDsWithMenuID(self, menuID):
+    def selectDishTypeIDWithDishID(self, dishID):
+        sql = """SELECT dishTypeID FROM Dish
+                   WHERE dishID=%d""" % dishID
+        return getUniqueResult(sql)
+    def selectDishIDsWithResturantID(self, resturantID):
         sql = """SELECT dishID FROM Dish
-                   WHERE menuID=%d""" % menuID
+                   WHERE resturantID=%d""" % resturantID
         return getResultSet(sql)
     def selectDishIDsWithDishTypeID(self, dishTypeID):
         sql = """SELECT dishID FROM Dish
                    WHERE dishTypeID=%d""" % dishTypeID
         return getResultSet(sql)
-    def identifyDishID(self, dishID, menuID):
-        return dishID != '' and menuID != '' and self.selectDishNameWithDishID(dishID, menuID) != ''
-    def identifyDishName(self, dishName, menuID):
-        return dishName != '' and menuID != '' and self.selectDishIDWithDishName(dishName, menuID) != ''
+    def identifyDishID(self, dishID):
+        return dishID != '' and self.selectDishNameWithDishID(dishID) != ''
+    def identifyDishName(self, dishName):
+        return dishName != '' and self.selectDishIDWithDishName(dishName) != ''
+
+def executeSQL(sql):
+    try:
+        cursor.execute(sql)
+        db.commit()
+    except:
+        db.rollback()
+
+def getUniqueResult(sql):
+    cursor.execute(sql)
+    results = cursor.fetchall()
+    result = ''
+    for row in results:
+        result = row[0]
+    return result
+
+def getResultSet(sql):
+    cursor.execute(sql)
+    results = cursor.fetchall()
+    resultSet = []
+    for row in results:
+        resultSet.append(row[0])
+    return resultSet
+
+def signIn(resturantName, password):
+    sql = """SELECT resturantID FROM Resturant
+               WHERE resturantName='%s' AND password='%s' ;""" % (resturantName, password)
+    cursor.execute(sql)
+    results = cursor.fetchall()
+    resturantID = ''
+    for row in results:
+        resturantID = row[0]
+    return resturantID != ''
+
+def getNow():
+    cursor.execute("SELECT DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%S');")
+    results = cursor.fetchall()
+    now = ''
+    for row in results:
+        now = row[0]
+    return now

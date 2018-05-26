@@ -108,3 +108,4 @@ instance/
 
 # db config
 db/config
+db/__pycache__/*
