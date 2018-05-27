@@ -266,7 +266,13 @@ class dishTypeOperator:
         return name != '' and self.selectDishTypeIDWithName(name, resturantID) != ''
     def identifyDishTypeID(self, dishTypeID):
         return dishTypeID != '' and self.selectDishTypeNameWithID(dishTypeID) != ''
+    #new
+    def selectAllDishType(self):
+        sql = """SELECT * FROM DishType"""
+        return getAllSet(sql)
 
+      
+      
 ## -----------------------------------------------------
 ## Table `TINYHIPPO`.`ResturantTable`
 ## -----------------------------------------------------
@@ -746,7 +752,10 @@ class orderListOperator:
         sql = """SELECT MAX(orderNumber) FROM OrderList"""
         number = getUniqueResult(sql)
         return 0 if number == None else int(number)
-    
+    #new 
+    def selectAllOrder(self):
+        sql = """SELECT * FROM OrderList"""                  
+        return getAllSet(sql)   
 
 ## -----------------------------------------------------
 ## Table `TINYHIPPO`.`Dish`
@@ -835,6 +844,21 @@ class dishOperator:
                             WHERE dishID=%d;""" % (newDishName, dishID)
                 executeSQL(sql)
                 print("[SUCCESS] The name of Dish '%s' has updated to '%s'." % (dishName, newDishName))
+            else:
+                print("[FAILED] DishID '%d' is not existed." % dishID)
+        else:
+            print('[FAILED] Please sign in first.')
+    
+    #new
+    def updateCategoryID(self, newCategoryID, dishID):
+        if self.hasSignedIn:
+            if self.identifyDishID(dishID):
+                dishTypeID = self.selectDishTypeIDWithDishID(dishID)
+                sql = """UPDATE Dish
+                            SET dishTypeID=%d
+                            WHERE dishID=%d;""" % (newCategoryID, dishID)
+                executeSQL(sql)
+                print("[SUCCESS] The CategoryID%d has updated to %d." % (dishTypeID, newCategoryID))
             else:
                 print("[FAILED] DishID '%d' is not existed." % dishID)
         else:
@@ -972,7 +996,19 @@ class dishOperator:
         return dishID != '' and self.selectDishNameWithDishID(dishID) != ''
     def identifyDishName(self, dishName):
         return dishName != '' and self.selectDishIDWithDishName(dishName) != ''
+    #new
+    def selectAllDishWithDishTypeID(self, dishTypeID):
+        sql = """SELECT * FROM Dish
+                   WHERE dishTypeID=%d""" % (dishTypeID)
+        return getAllSet(sql)
+    #new
+    def selectDishIDsWithDishName(self, dishName):
+        sql = """SELECT dishID FROM Dish
+                   WHERE dishName ='%s'""" % dishName
+        return getResultSet(sql)
 
+      
+      
 def executeSQL(sql):
     try:
         cursor.execute(sql)
@@ -1013,3 +1049,11 @@ def getNow():
     for row in results:
         now = row[0]
     return now
+#new
+def getAllSet(sql):
+    cursor.execute(sql)
+    results = cursor.fetchall()
+    resultSet = []
+    for row in results:
+        resultSet.append(row)
+    return resultSet 
