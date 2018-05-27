@@ -1,38 +1,7 @@
-'''
-from flask import Flask
-import json
-from flask.json import jsonify
-import os
-
-app = Flask(__name__)
-
-
-@app.route('/', methods=['GET'])
-def get_index_json():
-    filename = os.path.join(app.instance_path, 'menu_database.json')
-    f = open(filename, encoding='utf-8')
-    res = json.load(f)
-    return jsonify(res)
-
-
-# @app.route('/confirm', methods=['POST'])
-# def buy():
-#     blablabla...
-
-if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0')
-'''    
-
-import config
-
 import datetime, time, json, random
 
 from flask import Flask, jsonify, render_template, request, session, abort, make_response
 
-#特殊id
-from uuid import uuid4
-#验证信息
-from flask_httpauth import HTTPBasicAuth
 #引入OS模块中的产生一个24位的随机字符串的函数
 import os
 
@@ -42,37 +11,23 @@ sys.path.append("./db")
 from dbOperators import *
 
 app = Flask(__name__, instance_relative_config=True)
-app.config.from_object('config')
-app.config.from_pyfile('config.py')
 
 #随机产生24位的字符串作为SECRET_KEY
 app.config['SECRET_KEY'] = os.urandom(24) 
 
 app.debug = True
 
-#提供认证机制
-auth = HTTPBasicAuth()
-
-#操作edit
-edit_opt = editOperator()
-edit_opt.manageEditTable(resturantName='test4', password='123456')
 #操作dishType
 dish_type_opt = dishTypeOperator()
-dish_type_opt.manageDishTypeTable(resturantName='test4', password='123456')
+#dish_type_opt.manageDishTypeTable(resturantName='test4', password='123456')
 #操作dish
 dish_opt = dishOperator()
-dish_opt.manageDishTable(resturantName='test4', password='123456')
+#dish_opt.manageDishTable(resturantName='test4', password='123456')
 #操作customer
 customer_opt = customerOperator()
 #操作Orderlist
 orderlist_opt = orderListOperator()
-orderlist_opt.manageOrderListTable(resturantName='test4', password='123456')
-#操作Menu
-menu_opt = menuOperator()
-menu_opt.manageMenuTable(resturantName='test4', password='123456')
-#操作Edit
-edit_opt = editOperator()
-edit_opt.manageEditTable(resturantName='test4', password='123456')
+#orderlist_opt.manageOrderListTable(resturantName='test4', password='123456')
 
 
 #顾客账号获取用户自身信息 
@@ -87,29 +42,29 @@ def customer_info():
 #顾客账号获取菜单
 @app.route('/restaurant/customer/category', methods=['GET'])
 def customer_get_category():
-    all_menu = menu_opt.selectAllMenu()
+    all_dish_type = dish_type_opt.selectAllDishType()
     menu_json = []
-    for menu_row in all_menu:
-        all_dish = dish_opt.selectAllDishWithMenuID(menu_row[0])
+    for dish_type_row in all_dish_type:
+        all_dish = dish_opt.selectAllDishWithDishTypeID(dish_type_row[0])
         all_dish_json = []
         for dish_row in all_dish:
             all_dish_json.append({
                 "dishID": dish_row[0],
-                "CategoryID": menu_row[0],
+                "CategoryID": dish_type_row[0],
                 "name": dish_row[1],
-                "price": dish_row[2],
-                "imageURL": dish_row[3],
+                "price": dish_row[3],
+                "imageURL": dish_row[4],
                 "description": [
                     {
-                        "comment": dish_row[4],
-                        "monthlySales":  dish_row[6],
-                        "hot": dish_row[5]
+                        "comment": dish_row[5],
+                        "monthlySales":  dish_row[7],
+                        "hot": dish_row[6]
                     }
                 ]
             })
         menu_json.append({
-            "CategoryID": menu_row[0],
-            "name": menu_row[1],
+            "CategoryID": dish_type_row[0],
+            "name": dish_type_row[1],
             "dish": all_dish_json
         })   
     return jsonify(menu_json)
@@ -119,14 +74,17 @@ def customer_get_category():
 def customer_post_order():
     if not request.json:
         abort(400)
+    #订单信息
     dish_json = str(request.json['items']['dish'])
     price = request.json['items']['price']
+    table = request.json['items']['table']
+    customerId = request.json['items']['customerId']
     #生成新订单
-    new_order_id = orderlist_opt.insertOrderItem(orderDishes=dish_json, total=price)
-    #添加编写关系
-    edit_opt.insertEditItem(customerName=session['customerName'], orderNumber=new_order_id)
+    #目前dish_json内容无法插入
+    new_order_id = orderlist_opt.insertOrderItem(orderDetail="dish_json",
+                                                 total=price, tableID=table, customerID=customerId)
+    #返回订单ID
     return jsonify({"OrderID": new_order_id})
-
 
 #顾客账号支付订单
 @app.route('/restaurant/self/payment', methods=['POST'])
@@ -146,50 +104,49 @@ def restaurant_login():
             abort(400)
         session['phone'] = request.json['phone']
         session['password'] = request.json['password']
-        return jsonify("OK")
+        return jsonify("Login In")
     if request.method == 'DELETE':
         session.pop('phone')
         session.pop('password')
-        return jsonify("OK")
+        return jsonify("Login Off")
 
 #餐厅账号获取菜单或新增菜品
 @app.route('/restaurant/category', methods=['GET', 'POST'])
 def restaurant_category():
     if request.method == 'GET':
-        all_menu = menu_opt.selectAllMenu()
+        all_dish_type = dish_type_opt.selectAllDishType()
         menu_json = []
-        for menu_row in all_menu:
-            all_dish = dish_opt.selectAllDishWithMenuID(menu_row[0])
+        for dish_type_row in all_dish_type:
+            all_dish = dish_opt.selectAllDishWithDishTypeID(dish_type_row[0])
             all_dish_json = []
             for dish_row in all_dish:
                 all_dish_json.append({
                     "dishID": dish_row[0],
-                    "CategoryID": menu_row[0],
+                    "CategoryID": dish_type_row[0],
                     "name": dish_row[1],
-                    "price": dish_row[2],
-                    "imageURL": dish_row[3],
+                    "price": dish_row[3],
+                    "imageURL": dish_row[4],
                     "description": [
                         {
-                            "comment": dish_row[4],
-                            "monthlySales":  dish_row[6],
-                            "hot": dish_row[5]
+                            "comment": dish_row[5],
+                            "monthlySales":  dish_row[7],
+                            "hot": dish_row[6]
                         }
                     ]
                 })
             menu_json.append({
-                "CategoryID": menu_row[0],
-                "name": menu_row[1],
+                "CategoryID": dish_type_row[0],
+                "name": dish_type_row[1],
                 "dish": all_dish_json
             })   
         return jsonify(menu_json)
     if request.method == 'POST':
         if not request.json:
             abort(400)
-        dish_opt.insertDishItemByMenuID(dishName=request.json['items']['name'],
+        dish_opt.insertDishItem(dishName=request.json['items']['name'],
                             price=request.json['items']['price'],
                             dishImageURL=request.json['items']['imageURL'],
-                            dishTypeName=dish_type_opt.selectDishTypeNameWithID(dishTypeID=request.json['items']['CategoryID']),
-                            menuID=request.json['items']['CategoryID'])
+                            dishTypeID=request.json['items']['CategoryID'])
         dish_id = dish_opt.selectDishIDsWithDishName(request.json['items']['name'])
         return jsonify({"DishID": dish_id})
 
@@ -199,10 +156,18 @@ def restaurant_dish_change(dish_id):
     if request.method == 'PUT':
         if not request.json:
             abort(400)
-            #根据POST信息修改dish
-
+        #根据POST信息修改dish 需要登录restaurant
+        #dish_opt.manageDishTable(resturantName='test4', password='123456')
+        dish_opt.updateDishName(request.json['items']['name'], dish_id)
+        dish_opt.updateCategoryID(request.json['items']['CategoryID'], dish_id)
+        #POST信息中不包含OnSales
+        #dish_opt.updateOnSaleWithDishID(onSale, dish_id)
+        dish_opt.updatePriceWithDishID(request.json['items']['price'], dish_id)
+        dish_opt.updateDishImageURLWithDishID(request.json['items']['imageURL'], dish_id)
+        dish_opt.updateDishCommentWithDishID(request.json['items']['description']['comment'], dish_id)
+        dish_opt.updateDishHotWithDishID(request.json['items']['description']['hot'], dish_id)
+        dish_opt.updateMonthlySalesWithDishID(request.json['items']['description']['monthlySales'], dish_id)
         return jsonify("Update Dish")
-
     if request.method == 'DELETE':
         dish_opt.deleteDishItemWithDishID(dishID=dish_id)
         return jsonify("Delete Dish")
@@ -214,8 +179,8 @@ def restaurant_category_add():
     if not request.json or not 'name' in request.json:
         abort(400)
     #插入新的分类
-    new_dishtype_name = request.json['name']
-    dish_type_opt.insertDishTypeItem(dishTypeName=new_dishtype_name)
+    new_dish_type_name = request.json['name']
+    dish_type_opt.insertDishTypeItem(dishTypeName=new_dish_type_name)
     return jsonify("Insert New DishType")
 
 #餐厅账号修改分类信息或删除分类           
@@ -239,11 +204,14 @@ def restaurant_order():
     all_order_json = {"items": []}
     for row in all_order:
         all_order_json['items'].append({
-            "orderID": row[1],
-            "orderDishes": row[2],
-            "status": row[3],
-            "totalPrice": row[4],
-            "isPaid": row[5]
+            "orderID": row[0],
+            "dish": row[2],
+            "status": row[4],
+            "price": row[3],
+            "payment": row[5],
+            "time": row[6],
+            "table": row[7],
+            "customerId": row[8]
         })
     return jsonify(all_order_json)
 
@@ -257,48 +225,6 @@ def not_found(error):
 @app.errorhandler(400)
 def not_found(error):
     return make_response(jsonify([{'code': 'string', 'message': 'string'}]), 400)
-
-'''
-#回调函数,获取用户的密码
-@auth.get_password
-def get_password(username):
-    if username == 'user':
-        return '123456'
-    return None
-#回调函数,用于给客户端发送未授权错误代码
-@auth.error_handler
-def unauthorized():
-    #当请求收到一个 401 的错误，网页浏览都会跳出一个登录框
-    #403 错误表示 “禁止” 的错误
-    return make_response(jsonify({'error': 'Unauthorized access'}), 401)
-
-# 设置session
-@app.route('/')
-def set():
-    session['username'] = 'liefyuan' # 设置“字典”键值对
-    return 'success'
-# 读取session
-@app.route('/get')
-def get():
-    # session['username'] 如果内容不存在，将会报异常
-    # session.get('username') 如果内容不存在，将返回None
-    return session.get('username')
-# 删除session
-@app.route('/delete')
-def delete():
-    print (session.get('username'))
-    session.pop('username')
-    print (session.get('username'))
-    return 'success'
-# 清除session中所有数据
-@app.route('/clear')
-def clear():
-    print (session.get('username'))
-    # 清除session中所有数据
-    session.clear
-    print (session.get('username'))
-    return 'success'
-'''
 
 if __name__ == '__main__':
     app.run()
