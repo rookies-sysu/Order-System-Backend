@@ -6,3 +6,4 @@ def get_config(file_name="config"):
     with open(file_name, "r", encoding="utf-8") as f:
         config = json.load(f)
     return config
+

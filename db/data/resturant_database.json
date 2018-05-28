@@ -1,0 +1,78 @@
+[
+  {
+    "resturantName": "TINYHIPPO",
+    "password": "123456",
+    "phone": "86-12345678901",
+    "email": "TINYHIPPO@gmail.com",
+    "table": [
+      {
+        "tableNumber": 1,
+        "QRlink": {
+          "linkImageURL": "http://link1_1"
+        }
+      },
+      {
+        "tableNumber": 2,
+        "QRlink": {
+          "linkImageURL": "http://link1_2"
+        }
+      },
+      {
+        "tableNumber": 3,
+        "QRlink": {
+          "linkImageURL": "http://link1_3"
+        }
+      },
+      {
+        "tableNumber": 4,
+        "QRlink": {
+          "linkImageURL": "http://link1_4"
+        }
+      },
+      {
+        "tableNumber": 5,
+        "QRlink": {
+          "linkImageURL": "http://link1_5"
+        }
+      },
+      {
+        "tableNumber": 6,
+        "QRlink": {
+          "linkImageURL": "http://link1_6"
+        }
+      }
+    ]
+  },
+  {
+    "resturantName": "McDonalds",
+    "password": "123456",
+    "phone": "86-13234583927",
+    "email": "McDonalds@gmail.com",
+    "table": [
+      {
+        "tableNumber": 1,
+        "QRlink": {
+          "linkImageURL": "http://link2_1"
+        }
+      },
+      {
+        "tableNumber": 2,
+        "QRlink": {
+          "linkImageURL": "http://link2_2"
+        }
+      },
+      {
+        "tableNumber": 3,
+        "QRlink": {
+          "linkImageURL": "http://link2_3"
+        }
+      },
+      {
+        "tableNumber": 4,
+        "QRlink": {
+          "linkImageURL": "http://link2_4"
+        }
+      }
+    ]
+  }
+]

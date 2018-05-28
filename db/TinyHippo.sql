@@ -40,7 +40,6 @@ CREATE TABLE IF NOT EXISTS `TINYHIPPO`.`ResturantTable` (
   `currentOrderNumber` INT NOT NULL,
   `resturantID` INT UNSIGNED NOT NULL,
   PRIMARY KEY (`tableID`, `resturantID`),
-  UNIQUE INDEX `tableNumber_UNIQUE` (`tableNumber` ASC),
   UNIQUE INDEX `tableID_UNIQUE` (`tableID` ASC),
   INDEX `fk_Table_Resturant1_idx` (`resturantID` ASC),
   CONSTRAINT `fk_Table_Resturant1`
@@ -137,6 +136,7 @@ CREATE TABLE IF NOT EXISTS `TINYHIPPO`.`DishType` (
 CREATE TABLE IF NOT EXISTS `TINYHIPPO`.`Dish` (
   `dishID` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `dishName` VARCHAR(255) NOT NULL,
+  `dishDescription` VARCHAR(255) NOT NULL,
   `onSale` TINYINT NOT NULL,
   `price` FLOAT NOT NULL,
   `dishImageURL` VARCHAR(255) NOT NULL,

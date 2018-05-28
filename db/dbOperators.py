@@ -250,9 +250,9 @@ class dishTypeOperator:
             print('[FAILED] Please sign in first.')
 
     # select
-    def selectDishTypeIDWithName(self, name, resturantID):
+    def selectDishTypeIDWithName(self, dishTypeName, resturantID):
         sql = """SELECT dishTypeID FROM DishType
-                   WHERE resturantID=%d AND dishTypeName='%s'""" % (resturantID, name)
+                   WHERE resturantID=%d AND dishTypeName='%s'""" % (resturantID, dishTypeName)
         return getUniqueResult(sql)
     def selectDishTypeNameWithID(self, dishTypeID):
         sql = """SELECT dishTypeName FROM DishType
@@ -271,8 +271,6 @@ class dishTypeOperator:
         sql = """SELECT * FROM DishType"""
         return getAllSet(sql)
 
-      
-      
 ## -----------------------------------------------------
 ## Table `TINYHIPPO`.`ResturantTable`
 ## -----------------------------------------------------
@@ -299,7 +297,7 @@ class tableOperator:
         if self.hasSignedIn:
             if not self.identifyTableNumber(tableNumber):
                 sql = """INSERT INTO ResturantTable(tableNumber, currentOrderNumber, resturantID)
-                           VALUES (%d, %d);""" % (tableNumber, -1, self.resturantID)
+                           VALUES (%d, %d, %d);""" % (tableNumber, -1, self.resturantID)
                 executeSQL(sql)
                 print("[SUCCESS] TableNumber '%d' has been inserted to ResturantTable." % tableNumber)
             else:
@@ -314,7 +312,7 @@ class tableOperator:
                 tableNumber = self.selectTableNumberWithID(tableID)
                 self.deleteTableForeignKey(tableID)
                 sql = """DELETE FROM ResturantTable
-                        WHERE tableID=%d;""" % tableID
+                           WHERE tableID=%d;""" % tableID
                 executeSQL(sql)
                 print("[SUCCESS] ResturantTable '%d' has been deleted." % tableNumber)
             else:
@@ -390,12 +388,16 @@ class tableOperator:
         sql = """SELECT tableID FROM ResturantTable
                    WHERE resturantID=%d and currentOrderNumber=%d""" % (resturantID, -1)
         return getResultSet(sql)
+    def selectCurrentOrderNumberWithTableID(self, tableID):
+        sql = """SELECT currentOrderNumber FROM ResturantTable
+                   WHERE tableID=%d""" % tableID
+        return getUniqueResult(sql)
     def identifyTableNumber(self, number):
         return number != '' and self.selectTableIDWithNumber(number, self.resturantID) != ''
     def identifyTableID(self, tableID):
         return tableID != '' and self.selectTableNumberWithID(tableID) != ''
     def identifyAvailableTableID(self, tableID):
-        return tableID != '' and self.selectAvailableTableIDsWithResturantID(self.resturantID) != []
+        return tableID != '' and self.selectCurrentOrderNumberWithTableID(tableID) != ''
 
 
 ## -----------------------------------------------------
@@ -414,21 +416,26 @@ class QRlinkOperator:
             rOpt = resturantOperator()
             self.resturantID = rOpt.selectResturantIDWithName(resturantName)
             self.hasSignedIn = True
+            self.resturantName = resturantName
+            self.password = password
             print("[SUCCESS] '%s' Sign In QRlink!" % resturantName)
         else:
             print('[FAILED] Username is not existed or password is wrong.')
     # Insert operator
     def insertQRlinkItem(self, linkImageURL, tableNumber):
         if self.hasSignedIn:
-            tOpt = tableOperator()
-            tableID = tOpt.selectTableIDWithNumber(tableNumber, self.resturantID)
-            if not self.identifyLinkImageURL(linkImageURL):
-                sql = """INSERT INTO QRlink(linkImageURL, tableID)
-                           VALUES ('%s', %d);""" % (linkImageURL, tableID)
-                executeSQL(sql)
-                print("[SUCCESS] linkImageURL '%s' has been inserted to QRlink." % linkImageURL)
+            tOpt = tableOperator(resturantName=self.resturantName, password=self.password)
+            if tOpt.identifyTableNumber(tableNumber):
+                tableID = tOpt.selectTableIDWithNumber(tableNumber, self.resturantID)
+                if not self.identifyLinkImageURL(linkImageURL):
+                    sql = """INSERT INTO QRlink(linkImageURL, tableID)
+                            VALUES ('%s', %d);""" % (linkImageURL, tableID)
+                    executeSQL(sql)
+                    print("[SUCCESS] linkImageURL '%s' has been inserted to QRlink." % linkImageURL)
+                else:
+                    print("[FAILED] linkImageURL '%s' has been created." % linkImageURL)
             else:
-                print("[FAILED] linkImageURL '%s' has been created." % linkImageURL)
+                print("[FAILED] tableNumber '%d' is not existed." % tableNumber)
         else:
             print('[FAILED] Please sign in first.')
 
@@ -532,11 +539,14 @@ class customerOperator:
     def insertCustomerItem(self, customerName, linkID):
         if not self.identifyCustomerName(customerName):
             lOpt = QRlinkOperator()
-            tableID = lOpt.selectTableIDWithLinkID(linkID)
-            sql = """INSERT INTO Customer(customerName, tableID)
-                       VALUES ('%s', %d);""" % (customerName, tableID)
-            executeSQL(sql)
-            print("[SUCCESS] customerName '%s' has been inserted." % customerName)
+            if lOpt.identifyLinkID(linkID):
+                tableID = lOpt.selectTableIDWithLinkID(linkID)
+                sql = """INSERT INTO Customer(customerName, tableID)
+                        VALUES ('%s', %d);""" % (customerName, tableID)
+                executeSQL(sql)
+                print("[SUCCESS] customerName '%s' has been inserted." % customerName)
+            else:
+                print("[FAILED] linkID '%d' is not existed." % linkID)
         else:
             print("[FAILED] customerName '%s' has been created." % customerName)
     
@@ -628,7 +638,7 @@ class orderListOperator:
         # todo: collision
         orderNumber = self.getMaxNumber() + 1
         sql = """INSERT INTO OrderList(orderNumber, orderDetail, total, isPaid, status, editedTime, tableID, customerID)
-                    VALUES (%d, '%s', %f, %d, '%s', '%s', %d, %d);""" % (orderNumber, orderDetail, total, 'False', 'todo', now, tableID, customerID)
+                    VALUES (%d, '%s', %f, %d, '%s', '%s', %d, %d);""" % (orderNumber, orderDetail, total, False, 'todo', now, tableID, customerID)
         executeSQL(sql)
         print("[SUCCESS] A new Order '%d' has been inserted to Table." % orderNumber)
         return orderNumber
@@ -755,7 +765,8 @@ class orderListOperator:
     #new 
     def selectAllOrder(self):
         sql = """SELECT * FROM OrderList"""                  
-        return getAllSet(sql)   
+        return getAllSet(sql)  
+    
 
 ## -----------------------------------------------------
 ## Table `TINYHIPPO`.`Dish`
@@ -767,7 +778,7 @@ class dishOperator:
         if resturantName != None and password != None:
             self.manageDishTable(resturantName, password)
 
-    # Sign in to manage 'Resturant' table
+    # Sign in to manage 'Dish' table
     def manageDishTable(self, resturantName=None, password=None):
         if signIn(resturantName, password):
             rOpt = resturantOperator(resturantName, password)
@@ -780,18 +791,21 @@ class dishOperator:
             print('[FAILED] Username is not existed or password is wrong.')
 
     # Insert operator
-    def insertDishItem(self, dishName, price, dishImageURL, dishTypeID):
+    def insertDishItem(self, dishName, dishDescription, price, dishImageURL, dishTypeID):
         if self.hasSignedIn:
-            # get dishTypeName
             dtOpt = dishTypeOperator(resturantName=self.resturantName, password=self.password)
-            dishtypeName = dtOpt.selectDishTypeNameWithID(dishTypeID=dishTypeID)
             if dtOpt.identifyDishTypeID(dishTypeID=dishTypeID):
-                sql = """INSERT INTO Dish(dishName, onSale, price, dishImageURL, dishComment, dishHot, monthlySales, resturantID, dishTypeID)
-                           VALUES ('%s', %f, '%s', '%s', %d, %d, %d, %d);""" % (dishName, float(price), '', '', 0, 0, self.resturantID, dishTypeID)
-                executeSQL(sql)
-                print("[SUCCESS] A new Dish '%s' has been inserted into Dishtype '%s'." % (dishName, dishtypeName))
+                # get dishTypeName
+                dishtypeName = dtOpt.selectDishTypeNameWithID(dishTypeID=dishTypeID)
+                if not self.identifyDishName(dishName, self.resturantID):
+                    sql = """INSERT INTO Dish(dishName, dishDescription, onSale, price, dishImageURL, dishComment, dishHot, monthlySales, resturantID, dishTypeID)
+                            VALUES ('%s', '%s', %d, %f, '%s', '%s', %d, %d, %d, %d);""" % (dishName, dishDescription, False, float(price), dishImageURL, '', 0, 0, self.resturantID, dishTypeID)
+                    executeSQL(sql)
+                    print("[SUCCESS] A new Dish '%s' has been inserted into Dishtype '%s'." % (dishName, dishtypeName))
+                else:
+                    print("[FAILED] Dish '%s' has been created in resturant '%s'" % (dishName, self.resturantName))
             else:
-                print("[FAILED] Dish '%s' has been created in Dishtype '%s'" % (dishName, dishtypeName))
+                print("[FAILED] DishTypeID '%d' is not existed" % dishTypeID)
         else:
             print('[FAILED] Please sign in first.')
     
@@ -839,26 +853,31 @@ class dishOperator:
         if self.hasSignedIn:
             if self.identifyDishID(dishID):
                 dishName = self.selectDishNameWithDishID(dishID)
-                sql = """UPDATE Dish
-                            SET dishName='%s'
-                            WHERE dishID=%d;""" % (newDishName, dishID)
-                executeSQL(sql)
-                print("[SUCCESS] The name of Dish '%s' has updated to '%s'." % (dishName, newDishName))
+                if not self.identifyDishName(dishName, self.resturantID):
+                    sql = """UPDATE Dish
+                                SET dishName='%s'
+                                WHERE dishID=%d;""" % (newDishName, dishID)
+                    executeSQL(sql)
+                    print("[SUCCESS] The name of Dish '%s' has updated to '%s'." % (dishName, newDishName))
+                else:
+                    print("[FAILED] DishName '%s' has been created." % newDishName)
             else:
                 print("[FAILED] DishID '%d' is not existed." % dishID)
         else:
             print('[FAILED] Please sign in first.')
-    
-    #new
-    def updateCategoryID(self, newCategoryID, dishID):
+    def updateDishTypeIDWithDishID(self, newDishTypeID, dishID):
         if self.hasSignedIn:
             if self.identifyDishID(dishID):
-                dishTypeID = self.selectDishTypeIDWithDishID(dishID)
-                sql = """UPDATE Dish
-                            SET dishTypeID=%d
-                            WHERE dishID=%d;""" % (newCategoryID, dishID)
-                executeSQL(sql)
-                print("[SUCCESS] The CategoryID%d has updated to %d." % (dishTypeID, newCategoryID))
+                dtOpt = dishTypeOperator(resturantName=self.resturantName, password=self.password)
+                if dtOpt.identifyDishTypeID(dishTypeID=newDishTypeID):
+                    dishName = self.selectDishNameWithDishID(dishID)
+                    sql = """UPDATE Dish
+                                SET dishTypeID=%d
+                                WHERE dishID=%d;""" % (newDishTypeID, dishID)
+                    executeSQL(sql)
+                    print("[SUCCESS] The DishTypeID of Dish '%s' has updated to '%d'." % (dishName, newDishTypeID))
+                else:
+                    print("[FAILED] DishTypeID '%d' is not existed." % newDishTypeID)
             else:
                 print("[FAILED] DishID '%d' is not existed." % dishID)
         else:
@@ -972,9 +991,9 @@ class dishOperator:
                    WHERE dishID=%d""" % dishID
         return getUniqueResult(sql)
 
-    def selectDishIDWithDishName(self, dishName):
+    def selectDishIDWithDishName(self, dishName, resturantID):
         sql = """SELECT dishID FROM Dish
-                   WHERE resturantID=%d AND dishName='%s'""" % (self.resturantID, dishName)
+                   WHERE resturantID=%d AND dishName='%s'""" % (resturantID, dishName)
         return getUniqueResult(sql)
     def selectDishNameWithDishID(self, dishID):
         sql = """SELECT dishName FROM Dish
@@ -994,8 +1013,12 @@ class dishOperator:
         return getResultSet(sql)
     def identifyDishID(self, dishID):
         return dishID != '' and self.selectDishNameWithDishID(dishID) != ''
-    def identifyDishName(self, dishName):
-        return dishName != '' and self.selectDishIDWithDishName(dishName) != ''
+    def identifyDishName(self, dishName, resturantID):
+        return dishName != '' and resturantID != '' and self.selectDishIDWithDishName(dishName, resturantID) != ''
+    def selectAllDishWithDishTypeID(self, dishTypeID):
+        sql = """SELECT * FROM Dish
+                   WHERE dishTypeID=%d""" % (dishTypeID)
+        return getResultSet(sql)
     #new
     def selectAllDishWithDishTypeID(self, dishTypeID):
         sql = """SELECT * FROM Dish
@@ -1007,8 +1030,6 @@ class dishOperator:
                    WHERE dishName ='%s'""" % dishName
         return getResultSet(sql)
 
-      
-      
 def executeSQL(sql):
     try:
         cursor.execute(sql)
@@ -1049,6 +1070,7 @@ def getNow():
     for row in results:
         now = row[0]
     return now
+
 #new
 def getAllSet(sql):
     cursor.execute(sql)
