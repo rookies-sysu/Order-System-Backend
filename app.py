@@ -92,7 +92,8 @@ def customer_post_payment():
     if not request.json:
         abort(400)
     #改变支付状态
-    orderlist_opt.updateIsPaid(orderID=request.json['items']['OrderID'])
+    orderlist_opt.updateIsPaid(isPaid=request.json['items']['payment'],
+                                orderID=request.json['items']['OrderID'])
     return jsonify("Paid is Updated")
 
 #餐厅账号进行或退出登录
