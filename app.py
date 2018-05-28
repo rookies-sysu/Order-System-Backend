@@ -196,24 +196,30 @@ def restaurant_category_change(category_id):
     if request.method == 'DELETE':
         dish_type_opt.deleteDishTypeByID(dishTypeID=category_id)
         return jsonify("Delete DishType")
-
-#餐厅账号获取订单(所有)
+    
+#餐厅账号获取订单
 @app.route('/restaurant/order', methods=['GET'])
 def restaurant_order():
+    #每页订单的条目数
+    pageSize = int(request.args.get('pageSize'))
+    #第几页订单
+    pageNumber = int(request.args.get('pageNumber')) 
     all_order = orderlist_opt.selectAllOrder()
-    all_order_json = {"items": []}
+    number_order_json = []
     for row in all_order:
-        all_order_json['items'].append({
-            "orderID": row[0],
-            "dish": row[2],
-            "status": row[4],
-            "price": row[3],
-            "payment": row[5],
-            "time": row[6],
-            "table": row[7],
-            "customerId": row[8]
-        })
-    return jsonify(all_order_json)
+        #根据OrderID排序
+        if ((pageNumber-1)*pageSize < row[0]) & (pageNumber*pageSize >= row[0]):
+            number_order_json.append({
+                "orderID": row[0],
+                "dish": row[2],
+                "status": row[4],
+                "price": row[3],
+                "payment": row[5],
+                "time": row[6],
+                "table": row[7],
+                "customerId": row[8]
+            })
+    return jsonify(number_order_json)
 
 
 #处理404样式
