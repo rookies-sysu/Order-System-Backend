@@ -155,7 +155,7 @@ def restaurant_category():
 @app.route('/restaurant/dish/<int:dish_id>', methods=['PUT', 'DELETE'])
 def restaurant_dish_change(dish_id):
     if request.method == 'PUT':
-        if not request.json:
+        if not request.json | ~dish_opt.identifyDishID(dishID=dish_id):
             abort(400)
         #根据POST信息修改dish 需要登录restaurant
         #dish_opt.manageDishTable(resturantName='test4', password='123456')
@@ -170,6 +170,8 @@ def restaurant_dish_change(dish_id):
         dish_opt.updateMonthlySalesWithDishID(request.json['items']['description']['monthlySales'], dish_id)
         return jsonify("Update Dish")
     if request.method == 'DELETE':
+        if not request.json | ~dish_opt.identifyDishID(dishID=dish_id):
+            abort(400)
         dish_opt.deleteDishItemWithDishID(dishID=dish_id)
         return jsonify("Delete Dish")
 
