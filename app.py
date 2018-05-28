@@ -157,7 +157,7 @@ def restaurant_dish_change(dish_id):
     if request.method == 'PUT':
         if not request.json | ~dish_opt.identifyDishID(dishID=dish_id):
             abort(400)
-        #根据POST信息修改dish 需要登录restaurant
+        #根据POST信息修改dish 需要先登录restaurant
         #dish_opt.manageDishTable(resturantName='test4', password='123456')
         dish_opt.updateDishName(request.json['items']['name'], dish_id)
         dish_opt.updateCategoryID(request.json['items']['CategoryID'], dish_id)
@@ -181,6 +181,8 @@ def restaurant_category_add():
     #异常返回
     if not request.json or not 'name' in request.json:
         abort(400)
+    #根据POST信息新增dishtype 需要先登录restaurant
+    #dish_type_opt.manageDishTypeTable(resturantName='test4', password='123456')
     #插入新的分类
     new_dish_type_name = request.json['name']
     dish_type_opt.insertDishTypeItem(dishTypeName=new_dish_type_name)
@@ -189,17 +191,21 @@ def restaurant_category_add():
 #餐厅账号修改分类信息或删除分类           
 @app.route('/restaurant/category/<int:category_id>', methods=['PUT', 'DELETE'])
 def restaurant_category_change(category_id):
+    #操作dishtype 需要先登录restaurant
+    #dish_type_opt.manageDishTypeTable(resturantName='test4', password='123456')
     if request.method == 'PUT':
-        if not request.json:
+        if not request.json | dish_type_opt.selectDishTypeNameWithID(category_id) != '':
             abort(400)
         #修改分类信息
         old_dish_type_name = dish_type_opt.selectDishTypeNameWithID(category_id)
         dish_type_opt.updateDishTypeName(old_dish_type_name, request.json['items']['name'])
         return jsonify("Update DishType")
     if request.method == 'DELETE':
+        if dish_type_opt.selectDishTypeNameWithID(category_id) != '':
+            abort(400)
         dish_type_opt.deleteDishTypeByID(dishTypeID=category_id)
         return jsonify("Delete DishType")
-    
+
 #餐厅账号获取订单
 @app.route('/restaurant/order', methods=['GET'])
 def restaurant_order():
