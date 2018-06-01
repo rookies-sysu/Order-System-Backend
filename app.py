@@ -147,12 +147,16 @@ def restaurant_category():
     if request.method == 'POST':
         if not request.json:
             abort(400)
+        #description的信息需要改动
         dish_opt.insertDishItem(dishName=request.json['items']['name'],
+                            dishDescription=request.json['items']['description'],
                             price=request.json['items']['price'],
                             dishImageURL=request.json['items']['imageURL'],
                             dishTypeID=request.json['items']['CategoryID'])
         dish_id = dish_opt.selectDishIDsWithDishName(request.json['items']['name'])
         return jsonify({"DishID": dish_id})
+
+
 
 #餐厅账号修改菜品信息或删除菜品
 @app.route('/restaurant/dish/<int:dish_id>', methods=['PUT', 'DELETE'])
