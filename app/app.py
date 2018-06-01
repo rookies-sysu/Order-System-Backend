@@ -4,6 +4,7 @@ import json
 import random
 
 from flask import Flask, jsonify, render_template, request, session, abort, make_response
+import redis
 
 # 引入OS模块中的产生一个24位的随机字符串的函数
 import os
@@ -32,9 +33,26 @@ orderlist_opt = orderListOperator()
 #orderlist_opt.manageOrderListTable(resturantName='test4', password='123456')
 
 
+cache = redis.Redis(host='redis', port=6379)
+
+
+# redis 样例
+def get_hit_count():
+    retries = 5
+    while True:
+        try:
+            return cache.incr('hits')
+        except redis.exceptions.ConnectionError as exc:
+            if retries == 0:
+                raise exc
+            retries -= 1
+            time.sleep(0.5)
+
+
 @app.route('/', methods=['GET'])
 def index():
-    return "Hello Tiny-Hippo Backend!"
+    count = get_hit_count()
+    return 'Hello Tiny-Hippo Backend!! I have been seen {} times.\n'.format(count)
 
 # 顾客账号获取用户自身信息
 

@@ -5,7 +5,7 @@ services:
     build: app/.
     hostname: flaskserver
     working_dir: /code/app
-    command: bash -c "/code/app/wait-for-it.sh db:3360 -- echo \"database init finished\" && python app.py"
+    command: bash -c "/code/app/wait-for-it.sh -t 30 db:3360 -- echo \"database init finished\" && python app.py"
     ports:
       - "5000:5000"
     volumes:
@@ -16,6 +16,8 @@ services:
       - db
     stdin_open: true
     tty: true
+    # volumes:
+    #   - ./app/.:/code
 
   db:
     restart: always
@@ -29,8 +31,8 @@ services:
       MYSQL_USER: tiny
       MYSQL_PASSWORD: p@ssw0rd123
 
-  # redis:
-  #   image: "redis:alpine"
+  redis:
+    image: "redis:alpine"
 
 
   # nginx:

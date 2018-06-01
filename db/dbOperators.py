@@ -1,18 +1,13 @@
 import pymysql
 from tools import *
 
-path_to_config = "./config"
-
-# load config of database
-config = get_config(path_to_config)
-
 # connect to dataset
-db = pymysql.connect(host='db',
-                     user=config['localhost']['user'],
-                     port=config['localhost']['port'],
-                     password=config['localhost']['password'],
-                     database=config['localhost']['database'],
-                     charset=config['localhost']['charset'])
+db = pymysql.connect(host='172.19.0.1',
+                     user='root',
+                     port=3306,
+                     password='p@ssw0rd123',
+                     database='TINYHIPPO',
+                     charset='utf8')
 # create a cursor
 cursor = db.cursor()
 
