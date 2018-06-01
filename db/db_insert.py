@@ -88,3 +88,6 @@ oOpt = orderListOperator()
 oOpt.insertOrderItem(orderDetail='json1', total=100.0, tableID=1, customerID=1)
 oOpt.insertOrderItem(orderDetail='json2', total=200.0, tableID=2, customerID=2)
 oOpt.insertOrderItem(orderDetail='json3', total=300.0, tableID=3, customerID=3)
+
+
+db.close()

@@ -39,3 +39,6 @@ for mInfo in mDB:
     for dInfo in mInfo["foods"]:
         dOpt.insertDishItem(dishName=dInfo["name"], dishDescription=dInfo["description"],
                             price=dInfo["price"], dishImageURL=dInfo["image_url"], dishTypeID=dishTypeID)
+
+
+db.close()
