@@ -1,2 +1,0 @@
-flask>=0.10
-Werkzeug>=0.9

@@ -1,0 +1,9 @@
+{
+    "localhost":{
+        "host":"mysqlserver",
+        "user":"tiny",
+        "password":"p@ssw0rd123",
+        "database":"TINYHIPPO",
+        "charset":"utf8"
+    }
+}
