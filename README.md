@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/rookies-sysu/Order-System-Backend.svg?branch=docker)](https://travis-ci.org/rookies-sysu/Order-System-Backend)
+
 # Order-System-Backend
 Order system backend; python3 flask + mysql db
 
