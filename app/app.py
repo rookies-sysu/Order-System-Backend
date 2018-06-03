@@ -21,6 +21,9 @@ app = Flask(__name__, instance_relative_config=True)
 
 # 随机产生24位的字符串作为SECRET_KEY
 app.config['SECRET_KEY'] = os.urandom(24)
+# json输出中文
+app.config['JSON_AS_ASCII'] = False
+
 
 app.debug = True
 
@@ -85,13 +88,13 @@ def customer_get_category():
                 "dishID": dish_row[0],
                 "CategoryID": dish_type_row[0],
                 "name": dish_row[1],
-                "price": dish_row[3],
-                "imageURL": dish_row[4],
+                "price": dish_row[4],
+                "imageURL": dish_row[5],
                 "description": [
                     {
-                        "comment": dish_row[5],
-                        "monthlySales":  dish_row[7],
-                        "hot": dish_row[6]
+                        "comment": dish_row[6],
+                        "monthlySales":  dish_row[8],
+                        "hot": dish_row[7]
                     }
                 ]
             })
@@ -166,13 +169,13 @@ def restaurant_category():
                     "dishID": dish_row[0],
                     "CategoryID": dish_type_row[0],
                     "name": dish_row[1],
-                    "price": dish_row[3],
-                    "imageURL": dish_row[4],
+                    "price": dish_row[4],
+                    "imageURL": dish_row[5],
                     "description": [
                         {
-                            "comment": dish_row[5],
-                            "monthlySales":  dish_row[7],
-                            "hot": dish_row[6]
+                            "comment": dish_row[6],
+                            "monthlySales":  dish_row[8],
+                            "hot": dish_row[7]
                         }
                     ]
                 })
@@ -185,19 +188,18 @@ def restaurant_category():
     if request.method == 'POST':
         if not request.json:
             abort(400)
-
+        # description的信息需要改动
         dish_opt.insertDishItem(dishName=request.json['items']['name'],
+                                dishDescription=request.json['items']['description'],
                                 price=request.json['items']['price'],
                                 dishImageURL=request.json['items']['imageURL'],
-                                dishTypeID=request.json['items']['CategoryID'],
-                                dishDescription=request.json['items']['dishDescription'])
+                                dishTypeID=request.json['items']['CategoryID'])
         dish_id = dish_opt.selectDishIDsWithDishName(
             request.json['items']['name'])
         return jsonify({"DishID": dish_id})
 
+
 # 餐厅账号修改菜品信息或删除菜品
-
-
 @app.route('/restaurant/dish/<int:dish_id>', methods=['PUT', 'DELETE'])
 def restaurant_dish_change(dish_id):
     if request.method == 'PUT':
