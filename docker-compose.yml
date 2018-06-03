@@ -1,0 +1,39 @@
+version: '3'
+services:
+  web:
+    restart: always
+    build: app/.
+    hostname: flaskserver
+    working_dir: /code/app
+    command: bash -c "/code/app/wait-for-it.sh -t 15 db:3360 -- echo \"database init finished\" && python app.py"
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/code
+    links:
+      - db
+    depends_on:
+      - db
+    stdin_open: true
+    tty: true
+    # volumes:
+    #   - ./app/.:/code
+
+  db:
+    restart: always
+    build: db/.
+    hostname: mysqlserver
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: tiny-hippo
+      MYSQL_DATABASE: TINYHIPPO
+      MYSQL_USER: tiny
+      MYSQL_PASSWORD: tiny-hippo
+
+  redis:
+    image: "redis:alpine"
+
+
+  # nginx:
+  #   image: nginx:latest

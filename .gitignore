@@ -99,3 +99,13 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+
+# develop cache
+.vscode/
+
+instance/
+
+# db config
+db/config
+db/__pycache__/*
