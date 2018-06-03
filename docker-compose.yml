@@ -5,7 +5,7 @@ services:
     build: app/.
     hostname: flaskserver
     working_dir: /code/app
-    command: bash -c "/code/app/wait-for-it.sh -t 10 db:3360 -- echo \"database init finished\" && python app.py"
+    command: bash -c "/code/app/wait-for-it.sh -t 15 db:3360 -- echo \"database init finished\" && python app.py"
     ports:
       - "5000:5000"
     volumes:
