@@ -1,15 +1,10 @@
 import pymysql
 from tools import *
 
-path_to_config = "./config"
-
-# load config of database
-config = get_config(path_to_config)
-
 # connect to dataset
 db = pymysql.connect(host='db',
                      user='root',
-                     password='p@ssw0rd123',
+                     password='tiny-hippo',
                      database='TINYHIPPO',
                      charset='utf8')
 # create a cursor

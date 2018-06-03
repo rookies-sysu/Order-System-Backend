@@ -26,10 +26,10 @@ services:
     ports:
       - "3306:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: p@ssw0rd123
+      MYSQL_ROOT_PASSWORD: tiny-hippo
       MYSQL_DATABASE: TINYHIPPO
       MYSQL_USER: tiny
-      MYSQL_PASSWORD: p@ssw0rd123
+      MYSQL_PASSWORD: tiny-hippo
 
   redis:
     image: "redis:alpine"
