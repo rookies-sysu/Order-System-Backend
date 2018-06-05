@@ -56,10 +56,22 @@ def get_hit_count():
             time.sleep(0.5)
 
 
+def get_index_menu_database():
+    filename = os.path.join(app.instance_path, 'menu_database.json')
+    f = open(filename, encoding='utf-8')
+    res = json.load(f)
+    return res
+
+
 @app.route('/', methods=['GET'])
 def index():
+    res = get_index_menu_database()
     count = get_hit_count()
-    return 'Hello Tiny-Hippo Backend!! I have been seen {} times.\n'.format(count)
+
+    res['redis_test'] = 'Hello Tiny-Hippo Backend!! I have been seen {} times.\n'.format(
+        count)
+
+    return jsonify(res)
 
 # 顾客账号获取用户自身信息
 
