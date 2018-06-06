@@ -7,7 +7,7 @@ Order system backend; python3 flask + mysql db
 
 ![](https://raw.githubusercontent.com/rookies-sysu/Dashboard/master/imgs/deployment_img.png)
 
-目前 nginx 已经上线，并且已经全部部署至云服务器上。
+目前 nginx 已经成功加入。
 
 ## 目前发现的问题
 
