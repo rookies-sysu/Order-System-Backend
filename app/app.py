@@ -58,7 +58,7 @@ def get_hit_count():
 
 
 def get_index_menu_database():
-    filename = os.path.join(app.instance_path, 'menu_database.json')
+    filename = os.path.join('./data/', 'menu_database.json')
     f = open(filename, encoding='utf-8')
     res = json.load(f)
     return jsonify(res)
