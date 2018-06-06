@@ -3,14 +3,14 @@
 FROM mysql:5.7.22
 LABEL maintainer="longjj"
 
-RUN apt-get update \
-    && apt-get install -y python3-pip python3.5-dev \
-    && pip3 install --upgrade pip
+# RUN apt-get update \
+#     && apt-get install -y python3-pip python3.5-dev \
+#     && pip3 install --upgrade pip
 
 ADD . /script
 WORKDIR /script
 
-RUN pip3 install -r requirements.txt
+# RUN pip3 install -r requirements.txt
 
 # Copy SQL Fixture
 COPY ./TinyHippo.sql /docker-entrypoint-initdb.d/TinyHippo.sql

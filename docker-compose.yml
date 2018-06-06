@@ -1,39 +1,58 @@
 version: '3'
 services:
-  web:
-    restart: always
-    build: app/.
-    hostname: flaskserver
-    working_dir: /code/app
-    command: bash -c "/code/app/wait-for-it.sh -t 15 db:3360 -- echo \"database init finished\" && python app.py"
-    ports:
-      - "5000:5000"
-    volumes:
-      - .:/code
-    links:
-      - db
-    depends_on:
-      - db
-    stdin_open: true
-    tty: true
-    # volumes:
-    #   - ./app/.:/code
-
   db:
     restart: always
     build: db/.
-    hostname: mysqlserver
-    ports:
-      - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: tiny-hippo
       MYSQL_DATABASE: TINYHIPPO
       MYSQL_USER: tiny
-      MYSQL_PASSWORD: tiny-hippo
+      MYSQL_PASSWORD: tiny-hippo    
+    ports:
+      - "3306:3306"
+    networks:
+      - db_nw
+
+  
+  web:
+    restart: always
+    build: app/.
+    volumes:
+      - ./app:/code/app
+    working_dir: /code/app
+    command: bash -c "/code/app/wait-for-it.sh -t 20 db:3360 -- echo \"database init finished\" && python app.py"
+    depends_on:
+      - db
+    networks:
+      - db_nw
+      - web_nw
+      - redis_nw
+    # links:
+    #   - db
+    stdin_open: true
+    tty: true
 
   redis:
     image: "redis:alpine"
+    networks:
+      - redis_nw
 
+  nginx:
+    image: nginx:latest
+    restart: always
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - web
+    networks: 
+      - web_nw
 
-  # nginx:
-  #   image: nginx:latest
+networks:
+  db_nw:
+    driver: bridge
+  web_nw:
+    driver: bridge
+  redis_nw:
+    driver: bridge

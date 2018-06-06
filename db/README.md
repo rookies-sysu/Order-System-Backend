@@ -1,6 +1,6 @@
 # Database of TinyHippo
 
-
+> Departured after dockerized
 
 ## The format of config
 
