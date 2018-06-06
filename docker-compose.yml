@@ -23,12 +23,11 @@ services:
     command: bash -c "/code/app/wait-for-it.sh -t 20 db:3360 -- echo \"database init finished\" && python app.py"
     depends_on:
       - db
+      - redis
     networks:
       - db_nw
       - web_nw
       - redis_nw
-    # links:
-    #   - db
     stdin_open: true
     tty: true
 
