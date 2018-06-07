@@ -20,7 +20,7 @@ services:
     volumes:
       - ./app:/code/app
     working_dir: /code/app
-    command: bash -c "/code/app/wait-for-it.sh -t 20 db:3360 -- echo \"database init finished\" && python app.py"
+    command: bash -c "/code/app/wait-for-db.sh"
     depends_on:
       - db
       - redis
