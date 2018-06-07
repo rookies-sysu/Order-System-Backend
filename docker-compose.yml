@@ -13,14 +13,13 @@ services:
     networks:
       - db_nw
 
-  
   web:
     restart: always
     build: app/.
     volumes:
       - ./app:/code/app
     working_dir: /code/app
-    command: bash -c "/code/app/wait-for-db.sh"
+    command: bash -c "/code/app/run-after-db-init.sh"
     depends_on:
       - db
       - redis
