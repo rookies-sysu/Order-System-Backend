@@ -1,6 +1,8 @@
-[ {
+[
+  {
     "name": "热销",
-    "foods": [{
+    "foods": [
+      {
         "name": "俄式红肠双鸡汉堡",
         "image_url": "http://p1.meituan.net/210.0/xianfu/ce6aaf42b28a38c1300e71005e413cf729613.jpg",
         "description": "美味嫩滑的鸡翅炸得金黄热辣，刺激滋味瞬间爆棚！",
@@ -32,7 +34,8 @@
   },
   {
     "name": "优惠",
-    "foods": [{
+    "foods": [
+      {
         "name": "蜜汁鸡腿满碗饭中薯套餐",
         "image_url": "http://p0.meituan.net/210.0/xianfu/c4f34acd0a69be6f9d8c4d2d06ccf04d32448.jpg",
         "description": "原块去骨鸡排嫩滑多汁，加洋葱及胡椒调味，与翠绿新鲜的生菜和香浓烧鸡酱搭配，口感丰富，煎制过程0油添加，绝对让人食欲大打动！",
@@ -57,7 +60,8 @@
   },
   {
     "name": "充电工作餐",
-    "foods": [{
+    "foods": [
+      {
         "name": "麦辣鸡腿堡鸡翅套餐",
         "image_url": "http://p1.meituan.net/210.0/xianfu/92dae17da72ca865ee62023320d78a5d25375.jpg",
         "description": "美味嫩滑的鸡翅炸得金黄热辣，刺激滋味瞬间爆棚！",
@@ -89,7 +93,8 @@
   },
   {
     "name": "主食",
-    "foods": [{
+    "foods": [
+      {
         "name": "俄式红肠双鸡汉堡",
         "image_url": "http://p1.meituan.net/210.0/xianfu/ce6aaf42b28a38c1300e71005e413cf729613.jpg",
         "description": "美味嫩滑的鸡翅炸得金黄热辣，刺激滋味瞬间爆棚！",
@@ -156,7 +161,8 @@
   },
   {
     "name": "超值套餐",
-    "foods": [{
+    "foods": [
+      {
         "name": "俄式红肠双鸡堡双重满足餐",
         "image_url": "http://p1.meituan.net/210.0/xianfu/bcf373829eaeeac1f8d6031ddec5258432886.jpg",
         "description": "美味嫩滑的鸡翅炸得金黄热辣，刺激滋味瞬间爆棚！",
@@ -202,7 +208,8 @@
   },
   {
     "name": "小食",
-    "foods": [{
+    "foods": [
+      {
         "name": "那么大鸡小块 1份",
         "image_url": "http://p1.meituan.net/210.0/xianfu/3dea90c188e628f90266ec1f20a9190019583.jpg",
         "description": "美味嫩滑的鸡翅炸得金黄热辣，刺激滋味瞬间爆棚！",
@@ -248,7 +255,8 @@
   },
   {
     "name": "饮品",
-    "foods": [{
+    "foods": [
+      {
         "name": "那么大珍珠奶茶(热)",
         "image_url": "http://p0.meituan.net/210.0/xianfu/e43c893eb18a2d063691d5c975d6626413950.jpg",
         "description": "美味嫩滑的鸡翅炸得金黄热辣，刺激滋味瞬间爆棚！",
@@ -294,7 +302,8 @@
   },
   {
     "name": "甜品",
-    "foods": [{
+    "foods": [
+      {
         "name": "朱古力新地",
         "image_url": "http://p1.meituan.net/210.0/xianfu/d5abf710101fc6bac3a3cd4d899fcb2015003.jpg",
         "description": "美味嫩滑的鸡翅炸得金黄热辣，刺激滋味瞬间爆棚！",
@@ -333,7 +342,8 @@
   },
   {
     "name": "开心乐园餐",
-    "foods": [{
+    "foods": [
+      {
         "name": "开心乐园餐（汉堡包）配小薯条",
         "image_url": "http://p0.meituan.net/210.0/xianfu/bf808bb84be62bf70cf5fa1c7390a00121285.jpg",
         "description": "美味嫩滑的鸡翅炸得金黄热辣，刺激滋味瞬间爆棚！",
@@ -358,7 +368,8 @@
   },
   {
     "name": "早餐",
-    "foods": [{
+    "foods": [
+      {
         "name": "玉米燕麦豆浆(大)",
         "image_url": "http://p1.meituan.net/210.0/xianfu/cd7692613c4cf7908b75ea3d21d88b588302.jpg",
         "description": "美味嫩滑的鸡翅炸得金黄热辣，刺激滋味瞬间爆棚！",
@@ -382,8 +393,6 @@
         "description": "美味嫩滑的鸡翅炸得金黄热辣，刺激滋味瞬间爆棚！",
         "price": 25
       }
-
-
     ]
   }
 ]

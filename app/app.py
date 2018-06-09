@@ -43,7 +43,8 @@ orderlist_opt = orderListOperator()
 cache = redis.Redis(host='redis', port=6379)
 
 
-# redis 样例
+############################################################################################################
+# docker 开发测试api接口
 def get_hit_count():
     retries = 5
     while True:
@@ -56,14 +57,32 @@ def get_hit_count():
             time.sleep(0.5)
 
 
+def get_index_menu_database():
+    filename = os.path.join('./data/', 'menu_database.json')
+    f = open(filename, encoding='utf-8')
+    res = json.load(f)
+    return jsonify(res)
+
+
 @app.route('/', methods=['GET'])
 def index():
+    """
+    api 直接读取 ./instance 中的数据返回给前端进行测试
+    """
+    return get_index_menu_database()
+
+
+@app.route('/testRedis', methods=['GET'])
+def testRedis():
+    """
+    api 测试 redis 是否已经正确连接
+    """
     count = get_hit_count()
     return 'Hello Tiny-Hippo Backend!! I have been seen {} times.\n'.format(count)
+##############################################################################################################
+
 
 # 顾客账号获取用户自身信息
-
-
 @app.route('/restaurant/customer/self', methods=['GET'])
 def customer_info():
     if (session.get('CustomerID') == None):

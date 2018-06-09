@@ -2,6 +2,8 @@ FROM python:3.5-alpine
 LABEL maintainer="longjj"
 ENV LANG C
 
+RUN apk add --no-cache bash
+
 ADD . /code
 WORKDIR /code/app/
 
@@ -10,6 +12,6 @@ WORKDIR /code/app/
 COPY ./requirements.txt ./requirements.txt
 RUN pip install -r requirements.txt
 
-RUN apk add --no-cache bash
+
 
 EXPOSE 5000
