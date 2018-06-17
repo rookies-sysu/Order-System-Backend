@@ -163,8 +163,13 @@ def table_payment():
 def customer_history():
     if (session.get('CustomerID') == None):
         return jsonify("Error")
-    
-    return jsonify({'CustomerID':session['CustomerID']})
+    all_order = orderlist_opt.selectAllOrder()
+    history_json = []
+    #查找Customer对应的订单记录
+    for row in all_order:
+        if row[8] == session['CustomerID']:
+            history_json.append(row[2])
+    return jsonify(history_json)
 
 #顾客账号获取用户自身信息 
 @app.route('/restaurant/customer/self', methods=['GET'])
