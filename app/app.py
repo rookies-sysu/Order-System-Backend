@@ -82,7 +82,7 @@ def testRedis():
 
 
 #顾客信息记录(传入CustomerID和TableID)
-@app.route('/restaurant/customer/record', methods=['GET'])
+@app.route('/restaurant/customer/record', methods=['POST'])
 def customer_record():
     if session.get('CustomerID') == None and session.get('TableID') == None:
         #将用户信息记录至session并保存至redis
@@ -116,7 +116,7 @@ def customer_read():
         read_key = 'TID-'+str(session['TableID'])+'-CID-'+str(session['CustomerID'])
         read_current_order = str(cache.get(read_key).decode())
         #eval将字符串str当成有效的表达式来求值并返回计算结果(即json内容)
-        return jsonify(eval(read_current_order))
+        return jsonify({"items":eval(read_current_order)})
     return jsonify("error")
 
 #餐桌查看当前的Customer订单
@@ -162,7 +162,8 @@ def table_payment():
 @app.route('/restaurant/customer/history', methods=['GET'])
 def customer_history():
     if (session.get('CustomerID') == None):
-        return jsonify("Error")   
+        return jsonify("Error")
+    
     return jsonify({'CustomerID':session['CustomerID']})
 
 #顾客账号获取用户自身信息 
