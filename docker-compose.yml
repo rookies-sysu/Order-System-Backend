@@ -7,7 +7,7 @@ services:
       MYSQL_ROOT_PASSWORD: tiny-hippo
       MYSQL_DATABASE: TINYHIPPO
       MYSQL_USER: tiny
-      MYSQL_PASSWORD: tiny-hippo    
+      MYSQL_PASSWORD: tiny-hippo
     ports:
       - "3306:3306"
     networks:
