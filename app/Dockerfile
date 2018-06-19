@@ -1,6 +1,8 @@
 FROM python:3.5-alpine
 LABEL maintainer="longjj"
-ENV LANG C
+ENV LANG C.UTF-8
+
+RUN apk add --no-cache bash
 
 RUN apk add --no-cache bash
 
