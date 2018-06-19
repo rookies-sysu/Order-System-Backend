@@ -28,7 +28,7 @@ docker mysql 数据库的初始化需要使用api来进行初始化，不太科�
 3. 进入到根目录，运行 `docker-compose up` 进行项目启动，初次运行需要 pull 镜像，耗时稍长
 4. 看到如下输出，`db_1` 表示已经准备好接受连接，`web_1` 表示已经准备好接受 request ![](https://raw.githubusercontent.com/rookies-sysu/Dashboard/master/imgs/docker-compose-flask-mysql-res.png)
 5. 在浏览器上访问 `localhost:8080/testRedis`， 可以看到 `Hello Tiny-Hippo Backend!! I have been seen 1 times. ` 的字样，表示服务器已经成功work。刷新可以发现 times 前面的数字不断递增，说明 redis 缓冲容器正常运行并连接上了。钟涛接下来要在业务逻辑层对 redis 进行操作实现点菜逻辑。
-6. 在浏览器上访问 `http://localhost:8080/insert_fake_data1` ，如果收到 `Good createDB` 消息，说明数据库假数据已经插入。其中，目前只有 `data_insert.py` 这个可以用， `data_importer.py` 不能用，data_importer 调用的 api 为 `http://localhost:8080/insert_fake_data2`. 直接看浏览器返回的错误信息帮助就已经很大。
+6. 在浏览器上访问 `http://localhost:8080/insert_fake_data1` ，如果收到 `Good createDB` 消息，说明数据库假数据已经插入; 在浏览器上访问 `http://localhost:8080/insert_fake_data2` ，如果收到 `insert fake data 2 success!` 消息，说明数据库较为完备的数据已经插入。
 7. 连接数据库操作： 在终端输入 `mysql -h 172.19.0.1 -P 3306 -u root -p`， 密码是 `tiny-hippo` , 即可以正常连上数据库。注意，`172.19.0.1` 这个ip地址只在 longjj 的本机上适用，这是 docker-compose 给 db 这个容器随机分配的一个地址，如果上述命令连接不上，请上网查一下如何找到一个container的地址。(google `docker inspect`)
 8. 数据库已经可以成功持久化。
 8. 对于 py 程序代码，直接在本地修改保存后就可以直接在浏览器上测试，因为已经在 docker-compose 中挂载了相关代码文件，可以实时更新容器中的代码，不需要停掉服务器程序。如果需要修改容器中的配置，或者重新 build 容器，需要先 `docker-compose down` 停掉当前正在跑的服务器，再 `docker-compose build {你想要build的容器名(在docker-compose.yml文件中可以看到)}`，再 `docker-compose up` 重启服务器。重新开始调试。
