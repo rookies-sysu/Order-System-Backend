@@ -29,6 +29,9 @@ app.config['JSON_AS_ASCII'] = False
 
 app.debug = True
 
+#操作restaurant
+restaurant_opt = resturantOperator()
+#restaurant_opt.manageResturantTable(resturantName='test4', password='123456')
 # 操作dishType
 dish_type_opt = dishTypeOperator()
 #dish_type_opt.manageDishTypeTable(resturantName='test4', password='123456')
@@ -241,13 +244,22 @@ def customer_post_payment():
 # 餐厅账号进行或退出登录
 @app.route('/restaurant/session', methods=['POST', 'DELETE'])
 def restaurant_login():
-    # 将餐厅账号的信息存放至session
+    #将餐厅账号的信息存放至session
     if request.method == 'POST':
         if not request.json or not 'phone' or not 'password' in request.json:
             abort(400)
-        session['phone'] = request.json['phone']
-        session['password'] = request.json['password']
-        return jsonify("Login In")
+        phone = str(request.json['phone'])
+        password = str(request.json['password'])
+        session['phone'] = phone
+        session['password'] = password
+        restaurant_info = restaurant_opt.selectResturantInfoWithPP(phone,password)        
+        restaurant_json = {
+            "restaurantName": restaurant_info[0][1],
+            "password": restaurant_info[0][2],
+            "phone": restaurant_info[0][3],
+            "email": restaurant_info[0][4],
+        }
+        return jsonify(restaurant_json)
     if request.method == 'DELETE':
         session.pop('phone')
         session.pop('password')
