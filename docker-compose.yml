@@ -10,6 +10,8 @@ services:
       MYSQL_PASSWORD: tiny-hippo    
     ports:
       - "3306:3306"
+    volumes:
+      - /opt/mysql_data:/var/lib/mysql
     networks:
       - db_nw
 
