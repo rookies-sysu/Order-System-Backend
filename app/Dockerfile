@@ -13,7 +13,6 @@ WORKDIR /code/app/
 
 COPY ./requirements.txt ./requirements.txt
 RUN pip install -r requirements.txt
-
-
+RUN pip install flask-cors --upgrade
 
 EXPOSE 5000

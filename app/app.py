@@ -4,6 +4,7 @@ import json
 import random
 
 from flask import Flask, jsonify, render_template, request, session, abort, make_response
+from flask_cors import CORS
 import redis
 
 # 引入OS模块中的产生一个24位的随机字符串的函数
@@ -13,11 +14,12 @@ import os
 import sys
 from dbOperators import *
 
-# 复用不优雅的数据插入假数据
-import db_insert
-import data_importer
+# # 复用不优雅的数据插入假数据
+# import db_insert
+# import data_importer
 
 app = Flask(__name__, instance_relative_config=True)
+CORS(app)
 
 # 随机产生24位的字符串作为SECRET_KEY
 app.config['SECRET_KEY'] = os.urandom(24)
@@ -388,15 +390,15 @@ def restaurant_order():
     return jsonify(number_order_json)
 
 
-# 插入假数据的测试api
-@app.route('/insert_fake_data1', methods=['GET'])
-def insert_fake_data1():
-    return db_insert.insert_fake_data1()
+# # 插入假数据的测试api
+# @app.route('/insert_fake_data1', methods=['GET'])
+# def insert_fake_data1():
+#     return db_insert.insert_fake_data1()
 
 
-@app.route('/insert_fake_data2', methods=['GET'])
-def insert_fake_data2():
-    return data_importer.insert_fake_data2()
+# @app.route('/insert_fake_data2', methods=['GET'])
+# def insert_fake_data2():
+#     return data_importer.insert_fake_data2()
 
 
 # 处理404样式
