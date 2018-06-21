@@ -157,7 +157,13 @@ class resturantOperator():
         sql = """SELECT resturantName FROM Resturant
                    WHERE resturantID=%d""" % (resturantID)
         return getUniqueResult(sql)
-
+      
+    #new
+    def selectResturantInfoWithPP(self, phone, password):
+        sql = """SELECT * FROM Resturant
+                   WHERE phone='%s' AND password='%s'""" % (phone, password)
+        return getAllSet(sql)
+      
     def identifyResturantName(self, resturantName):
         return resturantName != '' and self.selectResturantIDWithName(resturantName) != ''
     def identifyResturantPhone(self, phone):
