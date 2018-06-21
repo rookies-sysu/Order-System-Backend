@@ -154,7 +154,7 @@ def table_payment():
             read_current_order = str(cache.get(read_key).decode())
             read_current_order = eval(read_current_order)
             #将每个小订单写入数据库
-            new_order_id = orderlist_opt.insertOrderItem(orderDetail=str(read_current_order['dish']),
+            new_order_id = orderlist_opt.insertOrderItem(orderDetail='json',
                                                     total=read_current_order['price'], 
                                                     tableID=read_current_order['table'],
                                                     customerID=read_current_order['customerId'])
@@ -225,7 +225,7 @@ def customer_post_order():
     customerId = request.json['items']['customerId']
     # 生成新订单
     # 目前dish_json内容无法插入
-    new_order_id = orderlist_opt.insertOrderItem(orderDetail=dish_json,
+    new_order_id = orderlist_opt.insertOrderItem(orderDetail='json',
                                                  total=price, tableID=table, customerID=customerId)
 
     # 返回订单ID
