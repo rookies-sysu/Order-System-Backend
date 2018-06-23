@@ -31,7 +31,7 @@ app.debug = True
 def json_response(dump_json):
     res = make_response(dump_json)
     res.headers['Access-Control-Allow-Origin'] = '*'  
-    res.headers['Access-Control-Allow-Methods'] = 'POST,GET,PUT,DELETE'  
+    res.headers['Access-Control-Allow-Methods'] = 'POST,GET,PUT,DELETE,OPTIONS'  
     res.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type'  
     return res
 
@@ -272,14 +272,17 @@ def restaurant_login():
         dump_json = jsonify(restaurant_json)
         return json_response(dump_json)
     if request.method == 'DELETE':
-        session.pop('phone')
-        session.pop('password')
+        if session.get('phone') != None and session.get('password') != None:
+            session.pop('phone')
+            session.pop('password')
         dump_json = jsonify("Login Off")
         return json_response(dump_json)
-
 # 餐厅账号获取菜单或新增菜品
 @app.route('/restaurant/category', methods=['GET', 'POST'])
 def restaurant_category():
+    if request.method == 'OPTIONS':
+        dump_json = jsonify("None")
+        return json_response(dump_json)
     if request.method == 'GET':
         all_dish_type = dish_type_opt.selectAllDishType()
         menu_json = []
@@ -314,13 +317,12 @@ def restaurant_category():
         #dish的插入需要登录restaurant
         dish_opt.manageDishTable(resturantName='TINYHIPPO', password='123456')
         #description的信息需要改动
-        dish_opt.insertDishItem(dishName=request.json['items']['name'],
+        dish_opt.insertDishItem(dishName='dish1',
                                 dishDescription="",
-                                price=request.json['items']['price'],
-                                dishImageURL=request.json['items']['imageURL'],
-                                dishTypeID=request.json['items']['CategoryID'])
-        dish_id = dish_opt.selectDishIDsWithDishName(
-            request.json['items']['name'])
+                                price=12,
+                                dishImageURL='url',
+                                dishTypeID=1)
+        dish_id = dish_opt.selectDishIDsWithDishName('dish1')
         dump_json = jsonify({"DishID": dish_id})
         return json_response(dump_json)
 
