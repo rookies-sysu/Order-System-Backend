@@ -31,13 +31,13 @@ app.debug = True
 
 #操作restaurant
 restaurant_opt = resturantOperator()
-restaurant_opt.manageResturantTable(resturantName='TINYHIPPO', password='123456')
+#restaurant_opt.manageResturantTable(resturantName='TINYHIPPO', password='123456')
 # 操作dishType
 dish_type_opt = dishTypeOperator()
-dish_type_opt.manageDishTypeTable(resturantName='TINYHIPPO', password='123456')
+#dish_type_opt.manageDishTypeTable(resturantName='TINYHIPPO', password='123456')
 # 操作dish
 dish_opt = dishOperator()
-dish_opt.manageDishTable(resturantName='TINYHIPPO', password='123456')
+#dish_opt.manageDishTable(resturantName='TINYHIPPO', password='123456')
 # 操作customer
 customer_opt = customerOperator()
 # 操作Orderlist
