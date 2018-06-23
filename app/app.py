@@ -218,7 +218,8 @@ def customer_get_category():
             "name": dish_type_row[1],
             "dish": all_dish_json
         })
-    return jsonify(menu_json)
+    dump_json = jsonify(menu_json)
+    return json_response(dump_json)
 
 # 顾客账号下单
 @app.route('/restaurant/self/order', methods=['POST'])
@@ -236,7 +237,8 @@ def customer_post_order():
                                                  total=price, tableID=table, customerID=customerId)
 
     # 返回订单ID
-    return jsonify({"OrderID": new_order_id})
+    dump_json = jsonify({"OrderID": new_order_id})
+    return json_response(dump_json)
 
 # 顾客账号支付订单
 @app.route('/restaurant/self/payment', methods=['POST'])
@@ -246,7 +248,8 @@ def customer_post_payment():
     # 改变支付状态
     orderlist_opt.updateIsPaid(isPaid=request.json['items']['payment'],
                                orderID=request.json['items']['OrderID'])
-    return jsonify("Paid is Updated")
+    dump_json = jsonify("Paid is Updated")
+    return json_response(dump_json)
 
 # 餐厅账号进行或退出登录
 @app.route('/restaurant/session', methods=['POST', 'DELETE'])
@@ -266,11 +269,13 @@ def restaurant_login():
             "phone": restaurant_info[0][3],
             "email": restaurant_info[0][4],
         }
-        return jsonify(restaurant_json)
+        dump_json = jsonify(restaurant_json)
+        return json_response(dump_json)
     if request.method == 'DELETE':
         session.pop('phone')
         session.pop('password')
-        return jsonify("Login Off")
+        dump_json = jsonify("Login Off")
+        return json_response(dump_json)
 
 # 餐厅账号获取菜单或新增菜品
 @app.route('/restaurant/category', methods=['GET', 'POST'])
@@ -301,7 +306,8 @@ def restaurant_category():
                 "name": dish_type_row[1],
                 "dish": all_dish_json
             })
-        return jsonify(menu_json)
+        dump_json = jsonify(menu_json)
+        return json_response(dump_json)
     if request.method == 'POST':
         if not request.json:
             abort(400)
@@ -315,7 +321,8 @@ def restaurant_category():
                                 dishTypeID=request.json['items']['CategoryID'])
         dish_id = dish_opt.selectDishIDsWithDishName(
             request.json['items']['name'])
-        return jsonify({"DishID": dish_id})
+        dump_json = jsonify({"DishID": dish_id})
+        return json_response(dump_json)
 
 
 # 餐厅账号修改菜品信息或删除菜品
@@ -342,13 +349,14 @@ def restaurant_dish_change(dish_id):
             request.json['items']['description']['hot'], dish_id)
         dish_opt.updateMonthlySalesWithDishID(
             request.json['items']['description']['monthlySales'], dish_id)
-        return jsonify("Update Dish")
+        dump_json = jsonify("Update Dish")
+        return json_response(dump_json)
     if request.method == 'DELETE':
         if not request.json | ~dish_opt.identifyDishID(dishID=dish_id):
             abort(400)
         dish_opt.deleteDishItemWithDishID(dishID=dish_id)
-        return jsonify("Delete Dish")
-
+        dump_json = jsonify("Delete Dish")
+        return json_response(dump_json)
 # 餐厅账号新增分类
 @app.route('/restaurant/category/', methods=['POST'])
 def restaurant_category_add():
@@ -360,8 +368,8 @@ def restaurant_category_add():
     # 插入新的分类
     new_dish_type_name = request.json['name']
     dish_type_opt.insertDishTypeItem(dishTypeName=new_dish_type_name)
-    return jsonify("Insert New DishType")
-
+    dump_json = jsonify("Insert New DishType")
+    return json_response(dump_json)
 
 # 餐厅账号修改分类信息或删除分类
 @app.route('/restaurant/category/<int:category_id>', methods=['PUT', 'DELETE'])
@@ -376,13 +384,14 @@ def restaurant_category_change(category_id):
             category_id)
         dish_type_opt.updateDishTypeName(
             old_dish_type_name, request.json['items']['name'])
-        return jsonify("Update DishType")
+        dump_json = jsonify("Update DishType")
+        return json_response(dump_json)
     if request.method == 'DELETE':
         if dish_type_opt.selectDishTypeNameWithID(category_id) != '':
             abort(400)
         dish_type_opt.deleteDishTypeByID(dishTypeID=category_id)
-        return jsonify("Delete DishType")
-
+        dump_json = jsonify("Delete DishType")
+        return json_response(dump_json)
 
 # 餐厅账号获取订单
 @app.route('/restaurant/order', methods=['GET'])
@@ -407,7 +416,8 @@ def restaurant_order():
                 "customerId": row[8]
             })
     return jsonify(number_order_json)
-
+    dump_json = jsonify(number_order_json)
+    return json_response(dump_json)
 
 # # 插入假数据的测试api
 # @app.route('/insert_fake_data1', methods=['GET'])
