@@ -31,7 +31,7 @@ app.debug = True
 def json_response(dump_json):
     res = make_response(dump_json)
     res.headers['Access-Control-Allow-Origin'] = '*'  
-    res.headers['Access-Control-Allow-Methods'] = 'POST'  
+    res.headers['Access-Control-Allow-Methods'] = 'POST,GET,PUT,DELETE'  
     res.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type'  
     return res
 
