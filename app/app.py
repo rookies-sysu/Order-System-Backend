@@ -28,6 +28,7 @@ app.config['JSON_AS_ASCII'] = False
 
 app.debug = True
 
+#解决跨域问题
 def json_response(dump_json):
     res = make_response(dump_json)
     res.headers['Access-Control-Allow-Origin'] = '*'  
@@ -95,7 +96,7 @@ def testRedis():
 
 #顾客信息记录(传入CustomerID和TableID)
 @app.route('/restaurant/customer/record', methods=['POST'])
-def customer_record():
+def customer_record():  
     if session.get('CustomerID') == None and session.get('TableID') == None:
         #将用户信息记录至session并保存至redis
         session['CustomerID'] = str(request.json['CustomerID'])
@@ -105,35 +106,40 @@ def customer_record():
         #将CustomerID和TableID组合作为key
         new_key = 'TID-'+str(session['TableID'])+'-CID-'+str(session['CustomerID'])
         cache.set(new_key, '')
-        return jsonify(new_key)
-    return jsonify('Record is Finished')
+        dump_json = jsonify(new_key)
+        return json_response(dump_json)
+    dump_json = jsonify('Record is Finished')
+    return json_response(dump_json)
 
 #顾客编写小订单
 @app.route('/restaurant/customer/edit', methods=['POST'])
 def customer_edit():
+    dump_json = jsonify("error")
     if session.get('CustomerID') != None and session.get('TableID') != None:
         #查找编写的edit-key
         edit_key = 'TID-'+str(session['TableID'])+'-CID-'+str(session['CustomerID'])
         #更新编写的小订单
         edit_update_order = request.json['items']
         cache.set(edit_key, edit_update_order)
-        return jsonify(edit_key+' is Updated')
-    return jsonify("error")
+        dump_json = jsonify(edit_key+' is Updated')
+    return json_response(dump_json)
 
 #顾客查看小订单  
 @app.route('/restaurant/customer/read', methods=['GET'])
 def customer_read():
+    dump_json = jsonify("error")
     if session.get('CustomerID') != None and session.get('TableID') != None:
         #查找要查看的read-key
         read_key = 'TID-'+str(session['TableID'])+'-CID-'+str(session['CustomerID'])
         read_current_order = str(cache.get(read_key).decode())
         #eval将字符串str当成有效的表达式来求值并返回计算结果(即json内容)
-        return jsonify({"items":eval(read_current_order)})
-    return jsonify("error")
+        dump_json = jsonify({"items":eval(read_current_order)})
+    return json_response(dump_json)
 
 #餐桌查看当前的Customer订单
 @app.route('/restaurant/table/read', methods=['GET'])
 def table_read():
+    dump_json = jsonify("error")
     if session.get('TableID') != None:
         items = []
         #读取同一桌所有的CustomerID
@@ -145,12 +151,13 @@ def table_read():
             read_key = 'TID-'+str(session['TableID'])+'-CID-'+str(i)
             read_current_order = str(cache.get(read_key).decode())
             items.append(eval(read_current_order))
-        return jsonify(items)
-    return jsonify("error")
+        dump_json = jsonify(items)
+    return json_response(dump_json)
 
 #餐桌支付订单
 @app.route('/restaurant/table/payment', methods=['GET'])
 def table_payment():
+    dump_json = jsonify("error")
     if session.get('TableID') != None:
         #读取同一桌所有的CustomerID
         read_table_key = 'TableID-'+str(session['TableID'])
@@ -167,28 +174,31 @@ def table_payment():
                                                     customerID=read_current_order['customerId'])
             #确认支付
             orderlist_opt.updateIsPaid(isPaid=1, orderID=new_order_id)                              
-        return jsonify("OK")
-    return jsonify("error")
+        dump_json = jsonify("OK")
+    return json_response(dump_json)
 
 #顾客查看历史
 @app.route('/restaurant/customer/history', methods=['GET'])
 def customer_history():
+    dump_json = jsonify("error")
     if (session.get('CustomerID') == None):
-        return jsonify("Error")
+        return json_response(dump_json)
     all_order = orderlist_opt.selectAllOrder()
     history_json = []
     #查找Customer对应的订单记录
     for row in all_order:
         if row[8] == session['CustomerID']:
             history_json.append(row[2])
-    return jsonify(history_json)
+    dump_json = jsonify(history_json)
+    return json_response(dump_json)
 
 #顾客账号获取用户自身信息 
 @app.route('/restaurant/customer/self', methods=['GET'])
 def customer_info():
-    if (session.get('CustomerID') == None):
-        return jsonify("Error")
-    return jsonify({'CustomerID':session['CustomerID']})
+    dump_json = jsonify("Error")
+    if (session.get('CustomerID') != None):
+        dump_json = jsonify({'CustomerID':session['CustomerID']})
+    return json_response(dump_json)
 
 # 顾客账号获取菜单
 @app.route('/restaurant/customer/category', methods=['GET'])
@@ -280,9 +290,9 @@ def restaurant_login():
 # 餐厅账号获取菜单或新增菜品
 @app.route('/restaurant/category', methods=['GET', 'POST'])
 def restaurant_category():
-    if request.method == 'OPTIONS':
-        dump_json = jsonify("None")
-        return json_response(dump_json)
+    # if request.method == 'OPTIONS':
+    #     dump_json = jsonify("None")
+    #     return json_response(dump_json)
     if request.method == 'GET':
         all_dish_type = dish_type_opt.selectAllDishType()
         menu_json = []
@@ -335,22 +345,22 @@ def restaurant_dish_change(dish_id):
             abort(400)
         # 根据POST信息修改dish 需要先登录restaurant
         dish_opt.manageDishTable(resturantName='TINYHIPPO', password='123456')
-        dish_opt.updateDishName(request.json['items']['name'], dish_id)
+        dish_opt.updateDishName(request.json['name'], dish_id)
 
         # 不注释这句话会报错： longj
-        # dish_opt.updateCategoryID(request.json['items']['CategoryID'], dish_id)
+        # dish_opt.updateCategoryID(request.json['CategoryID'], dish_id)
 
         # POST信息中不包含OnSales
         #dish_opt.updateOnSaleWithDishID(onSale, dish_id)
-        dish_opt.updatePriceWithDishID(request.json['items']['price'], dish_id)
+        dish_opt.updatePriceWithDishID(request.json['price'], dish_id)
         dish_opt.updateDishImageURLWithDishID(
-            request.json['items']['imageURL'], dish_id)
+            request.json['imageURL'], dish_id)
         dish_opt.updateDishCommentWithDishID(
-            request.json['items']['description']['comment'], dish_id)
+            request.json['description']['comment'], dish_id)
         dish_opt.updateDishHotWithDishID(
-            request.json['items']['description']['hot'], dish_id)
+            request.json['description']['hot'], dish_id)
         dish_opt.updateMonthlySalesWithDishID(
-            request.json['items']['description']['monthlySales'], dish_id)
+            request.json['description']['monthlySales'], dish_id)
         dump_json = jsonify("Update Dish")
         return json_response(dump_json)
     if request.method == 'DELETE':
@@ -417,7 +427,6 @@ def restaurant_order():
                 "table": row[7],
                 "customerId": row[8]
             })
-    return jsonify(number_order_json)
     dump_json = jsonify(number_order_json)
     return json_response(dump_json)
 
@@ -435,14 +444,21 @@ def restaurant_order():
 # 处理404样式
 @app.errorhandler(404)
 def not_found_404(error):
-    return make_response(jsonify({'error': 'Not found'}), 404)
+    res = make_response(jsonify({'error': 'Not found'}), 404)
+    res.headers['Access-Control-Allow-Origin'] = '*'  
+    res.headers['Access-Control-Allow-Methods'] = 'POST,GET,PUT,DELETE,OPTIONS'  
+    res.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type'  
+    return res
 
 
 # 处理400样式
 @app.errorhandler(400)
 def not_found_400(error):
-    return make_response(jsonify([{'code': 'string', 'message': 'string'}]), 400)
-
+    res = make_response(jsonify([{'code': '400', 'message': 'string'}]), 400)
+    res.headers['Access-Control-Allow-Origin'] = '*'  
+    res.headers['Access-Control-Allow-Methods'] = 'POST,GET,PUT,DELETE,OPTIONS'  
+    res.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type'  
+    return res
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
