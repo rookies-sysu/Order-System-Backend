@@ -26,8 +26,15 @@ app.config['SECRET_KEY'] = os.urandom(24)
 # json输出中文
 app.config['JSON_AS_ASCII'] = False
 
-
 app.debug = True
+
+def json_response(dump_json):
+    res = make_response(dump_json)
+    res.headers['Access-Control-Allow-Origin'] = '*'  
+    res.headers['Access-Control-Allow-Methods'] = 'POST'  
+    res.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type'  
+    return res
+
 
 #操作restaurant
 restaurant_opt = resturantOperator()
@@ -299,7 +306,7 @@ def restaurant_category():
         if not request.json:
             abort(400)
         #dish的插入需要登录restaurant
-        #dish_opt.manageDishTable(resturantName='test4', password='123456')
+        dish_opt.manageDishTable(resturantName='TINYHIPPO', password='123456')
         #description的信息需要改动
         dish_opt.insertDishItem(dishName=request.json['items']['name'],
                                 dishDescription="",
@@ -318,7 +325,7 @@ def restaurant_dish_change(dish_id):
         if not request.json | ~dish_opt.identifyDishID(dishID=dish_id):
             abort(400)
         # 根据POST信息修改dish 需要先登录restaurant
-        #dish_opt.manageDishTable(resturantName='test4', password='123456')
+        dish_opt.manageDishTable(resturantName='TINYHIPPO', password='123456')
         dish_opt.updateDishName(request.json['items']['name'], dish_id)
 
         # 不注释这句话会报错： longj
@@ -349,7 +356,7 @@ def restaurant_category_add():
     if not request.json or not 'name' in request.json:
         abort(400)
     # 根据POST信息新增dishtype 需要先登录restaurant
-    #dish_type_opt.manageDishTypeTable(resturantName='test4', password='123456')
+    dish_type_opt.manageDishTypeTable(resturantName='TINYHIPPO', password='123456')
     # 插入新的分类
     new_dish_type_name = request.json['name']
     dish_type_opt.insertDishTypeItem(dishTypeName=new_dish_type_name)
@@ -360,7 +367,7 @@ def restaurant_category_add():
 @app.route('/restaurant/category/<int:category_id>', methods=['PUT', 'DELETE'])
 def restaurant_category_change(category_id):
     # 操作dishtype 需要先登录restaurant
-    #dish_type_opt.manageDishTypeTable(resturantName='test4', password='123456')
+    dish_type_opt.manageDishTypeTable(resturantName='TINYHIPPO', password='123456')
     if request.method == 'PUT':
         if not request.json | dish_type_opt.selectDishTypeNameWithID(category_id) != '':
             abort(400)
