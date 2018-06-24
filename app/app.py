@@ -93,6 +93,14 @@ def testRedis():
     return 'Hello Tiny-Hippo Backend!! I have been seen {} times.\n'.format(count)
 ##############################################################################################################
 
+@app.route('/restaurant/recommendation')
+def restaurant_recommendation():
+    filename = os.path.join('./data/', 'recommendation.json')
+    f = open(filename, encoding='utf-8')
+    res = json.load(f)
+    return json_response(jsonify(res))
+
+
 
 #顾客信息记录(传入CustomerID和TableID)
 @app.route('/restaurant/customer/record', methods=['POST'])
