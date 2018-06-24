@@ -100,6 +100,24 @@ def restaurant_recommendation():
     res = json.load(f)
     return json_response(jsonify(res))
 
+@app.route('/restaurant/getdish/<int:dish_id>', methods=['GET'])
+def get_dish(dish_id):
+    dish_json = []
+    dish_json.append({
+                "dishID": dish_id,
+                "CategoryID": dish_opt.selectDishTypeIDWithDishID(dish_id),
+                "name": dish_opt.selectDishNameWithDishID(dish_id),
+                "price": dish_opt.selectPriceWithDishID(dish_id),
+                "imageURL": dish_opt.selectDishImageURLWithDishID(dish_id),
+                "description": [
+                    {
+                        "comment": dish_opt.selectDishCommentWithDishID(dish_id),
+                        "monthlySales": dish_opt.selectMonthlySalesWithDishID(dish_id),
+                        "hot": dish_opt.selectDishHotWithDishID(dish_id)
+                    }
+                ]
+            })
+    return json_response(jsonify(dish_json))
 
 
 #顾客信息记录(传入CustomerID和TableID)
