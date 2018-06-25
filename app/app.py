@@ -90,7 +90,7 @@ def testRedis():
 def restaurant_recommendation():
     dish_json = []
     restaurant_id = request.args.get('restaurant_id')
-    _, result = selectOperator(tableName="Recommendation", restaurantID=restaurant_id, result=["recommendationID"])
+    _, result = selectOperator(tableName="Recommendation", restaurantID=1, result=["recommendationID"])
     
     recommendation_ids = []
     for r in result:
@@ -98,11 +98,11 @@ def restaurant_recommendation():
 
     for recommendation_id in recommendation_ids:
         dish_ids = []
-        descriptions = []
+        descriptions = [] 
         _, result = selectOperator(tableName="RecommendationDetails", recommendationID=recommendation_id, result=["dishID", "description"])
         for r in result:
-            dish_ids.append("dishID")
-            descriptions.append("description")
+            dish_ids.append(r["dishID"])
+            descriptions.append(r["description"])
         
         details = []
         for i in range(len(dish_ids)):
