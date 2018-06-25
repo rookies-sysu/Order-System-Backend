@@ -97,7 +97,7 @@ def restaurant_recommendation():
     
     return json_response(jsonify(recommendation_ids))
 
-@app.route('/restaurant/recommendation')
+@app.route('/restaurant/recommendation/<int:recommendation_id>')
 def get_recommendation(recommendation_id):
     dish_ids = []
     descriptions = [] 
