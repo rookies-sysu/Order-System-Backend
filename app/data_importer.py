@@ -44,8 +44,13 @@ def insert_fake_data2():
                 dOpt.insertDishItem(dishName=dInfo["name"], dishDescription=dInfo["description"], 
                         price=dInfo["price"], dishImageURL=dInfo["image_url"], dishTypeID=dishTypeID)
 
+        rcOpt = RecommendationOperator()
+        rcdOpt = RecommendationDetailsOperator()
         for rcInfo in rcDB:
-            
+            rcOpt.insertRecommendationItem(rcInfo['title'], rcInfo['tag'], rcInfo['image'])
+            rcid = selectUniqueItem(tableName="Recommedation", restaurantID=1, title=rcInfo['title'], result=["recommendationID"])
+            for obj in rcInfo['details']:
+                rcdOpt.insertRecommendationDetailsItem(rcid, obj.dish_id, obj.description)
 
         return 'insert fake data 2 success!'
     except:

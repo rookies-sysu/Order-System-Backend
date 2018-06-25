@@ -613,7 +613,7 @@ class orderListOperator:
 ## -----------------------------------------------------
 ## Table `TINYHIPPO`.`Recommendation`
 ## -----------------------------------------------------
-class recommendationOperator:
+class RecommendationOperator:
     def __init__(self, restaurantName=None, password=None):
         self.restaurantID = None
         self.hasSignedIn = False
