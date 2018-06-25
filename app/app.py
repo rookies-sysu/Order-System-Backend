@@ -160,7 +160,7 @@ def customer_record():
     session['CustomerID'] = str(request.json['CustomerID'])
     session['TableID'] = str(request.json['table'])
     # 记录用户的image和nickname
-    session['name'] = str(request.json['table'])
+    session['name'] = str(request.json['name'])
     session['image'] = str(request.json['image'])
     # 对某一张Table增添顾客(list操作)
     cache.rpush('TableID-'+str(session['TableID']), session['CustomerID'])
