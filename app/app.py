@@ -162,8 +162,8 @@ def customer_record():
     # 记录用户的image和nickname
     session['name'] = str(request.json['name'])
     session['image'] = str(request.json['image'])
-    # 对某一张Table增添顾客(list操作)
-    cache.rpush('TableID-'+str(session['TableID']), session['CustomerID'])
+    # 对某一张Table增添顾客(set操作 元素不重复)
+    cache.sadd('TableID-'+str(session['TableID']), session['CustomerID'])
     # 将CustomerID和TableID组合作为key
     new_key = 'TID-'+str(session['TableID'])+'-CID-'+str(session['CustomerID'])
     cache.set(new_key, '')
@@ -207,8 +207,8 @@ def table_read():
         single_item = []
         # 读取同一桌所有的CustomerID
         read_table_key = 'TableID-'+str(session['TableID'])
-        customers_id = cache.lrange(read_table_key, 0, -1)
-        for i in customers_id:
+        customers_ids = cache.smembers(read_table_key)
+        for i in customers_ids:
             i = i.decode()
             # 加入每个Customer编写的小订单
             read_key = 'TID-'+str(session['TableID'])+'-CID-'+str(i)
@@ -228,7 +228,7 @@ def table_payment():
         # 读取同一桌所有的CustomerID
         tableID = session['TableID']
         read_table_key = 'TableID-'+str(tableID)
-        customer_ids = cache.lrange(read_table_key, 0, -1)
+        customer_ids = cache.smembers(read_table_key)
         for customer_id in customer_ids:
             customer_id = customer_id.decode()
             read_key = 'TID-'+str(tableID)+'-CID-'+str(customer_id)
