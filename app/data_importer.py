@@ -3,7 +3,7 @@ from dbOperators import *
 from tools import *
 
 def insert_fake_data2():
-    try:
+    # try: 
         # create tools
         tools = Tools()
 
@@ -17,7 +17,7 @@ def insert_fake_data2():
             rOpt = restaurantOperator()
             rOpt.insertRestaurantItem(restaurantName=rInfo["restaurantName"],
                 password=rInfo["password"],
-                phone=rInfo["phone"],
+                phone=rInfo["phone"], 
                 email=rInfo["email"])
             tOpt = tableOperator(restaurantName=rInfo["restaurantName"], password=rInfo["password"])
             qrOpt = QRlinkOperator(restaurantName=rInfo["restaurantName"], password=rInfo["password"])
@@ -53,5 +53,5 @@ def insert_fake_data2():
                 rcdOpt.insertRecommendationDetailsItem(rcid, obj.dish_id, obj.description)
 
         return 'insert fake data 2 success!'
-    except:
-        return 'insert fake data 2 failed!'
+    # except:
+    #     return 'insert fake data 2 failed!'

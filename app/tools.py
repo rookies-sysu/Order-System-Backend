@@ -71,9 +71,4 @@ class Tools:
         """Get Configuration"""
         with open(file_name, "r", encoding="utf-8") as f:
             config = json.load(f)
-        return 
-        
-    def getUniqueResult(self, status, result):
-        _, result = selectOperator(tableName="Restaurant", restaurantName=restaurantName, result=["restaurantID"])
-        self.restaurantID = result[0]["restaurantID"]
         return config

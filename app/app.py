@@ -7,6 +7,8 @@ from flask import Flask, jsonify, render_template, request, session, abort, make
 from flask_cors import CORS
 import redis
 
+import data_importer
+
 # 引入OS模块中的产生一个24位的随机字符串的函数
 import os
 
@@ -24,7 +26,7 @@ app.config['JSON_AS_ASCII'] = False
 
 app.debug = True
 
-#解决跨域问题
+# 解决跨域问题
 def json_response(dump_json):
     res = make_response(dump_json)
     res.headers['Access-Control-Allow-Origin'] = '*'  
@@ -33,17 +35,12 @@ def json_response(dump_json):
     return res
 
 
-#操作restaurant
+# 操作restaurant
 restaurant_opt = restaurantOperator()
-#restaurant_opt.manageRestaurantTable(restaurantName='TINYHIPPO', password='123456')
 # 操作dishType
 dish_type_opt = dishTypeOperator()
-#dish_type_opt.manageDishTypeTable(restaurantName='TINYHIPPO', password='123456')
 # 操作dish
 dish_opt = dishOperator()
-#dish_opt.manageDishTable(restaurantName='TINYHIPPO', password='123456')
-# 操作customer
-# customer_opt = customerOperator()
 # 操作Orderlist
 orderlist_opt = orderListOperator()
 
@@ -156,16 +153,16 @@ def get_dish(dish_id):
     return json_response(jsonify(dish_json))
 
 
-#顾客信息记录(传入CustomerID和TableID)
+# 顾客信息记录(传入CustomerID和TableID)
 @app.route('/restaurant/customer/record', methods=['POST'])
 def customer_record():  
     if session.get('CustomerID') == None and session.get('TableID') == None:
-        #将用户信息记录至session并保存至redis
+        # 将用户信息记录至session并保存至redis
         session['CustomerID'] = str(request.json['CustomerID'])
         session['TableID'] = str(request.json['table'])
-        #对某一张Table增添顾客(list操作)
+        # 对某一张Table增添顾客(list操作)
         cache.rpush('TableID-'+str(session['TableID']), session['CustomerID'])
-        #将CustomerID和TableID组合作为key
+        # 将CustomerID和TableID组合作为key
         new_key = 'TID-'+str(session['TableID'])+'-CID-'+str(session['CustomerID'])
         cache.set(new_key, '')
         dump_json = jsonify(new_key)
@@ -173,90 +170,98 @@ def customer_record():
     dump_json = jsonify('Record is Finished')
     return json_response(dump_json)
 
-#顾客编写小订单
+# 顾客编写小订单
 @app.route('/restaurant/customer/edit', methods=['POST'])
 def customer_edit():
     dump_json = jsonify("error")
     if session.get('CustomerID') != None and session.get('TableID') != None:
-        #查找编写的edit-key
+        # 查找编写的edit-key
         edit_key = 'TID-'+str(session['TableID'])+'-CID-'+str(session['CustomerID'])
-        #更新编写的小订单
+        # 更新编写的小订单
         edit_update_order = request.json['items']
         cache.set(edit_key, edit_update_order)
         dump_json = jsonify(edit_key+' is Updated')
     return json_response(dump_json)
 
-#顾客查看小订单  
+# 顾客查看小订单  
 @app.route('/restaurant/customer/read', methods=['GET'])
 def customer_read():
     dump_json = jsonify("error")
     if session.get('CustomerID') != None and session.get('TableID') != None:
-        #查找要查看的read-key
+        # 查找要查看的read-key
         read_key = 'TID-'+str(session['TableID'])+'-CID-'+str(session['CustomerID'])
         read_current_order = str(cache.get(read_key).decode())
-        #eval将字符串str当成有效的表达式来求值并返回计算结果(即json内容)
+        # eval将字符串str当成有效的表达式来求值并返回计算结果(即json内容)
         dump_json = jsonify({"items":eval(read_current_order)})
     return json_response(dump_json)
 
-#餐桌查看当前的Customer订单
+# 餐桌查看当前的Customer订单
 @app.route('/restaurant/table/read', methods=['GET'])
 def table_read():
     dump_json = jsonify("error")
     if session.get('TableID') != None:
         items = []
-        #读取同一桌所有的CustomerID
+        # 读取同一桌所有的CustomerID
         read_table_key = 'TableID-'+str(session['TableID'])
         customers_id = cache.lrange(read_table_key, 0, -1)
         for i in customers_id:
             i = i.decode()
-            #加入每个Customer编写的小订单
+            # 加入每个Customer编写的小订单
             read_key = 'TID-'+str(session['TableID'])+'-CID-'+str(i)
             read_current_order = str(cache.get(read_key).decode())
             items.append(eval(read_current_order))
         dump_json = jsonify(items)
     return json_response(dump_json)
 
-#餐桌支付订单
+# 餐桌支付订单
 @app.route('/restaurant/table/payment', methods=['GET'])
 def table_payment():
     dump_json = jsonify("error")
     if session.get('TableID') != None:
-        #读取同一桌所有的CustomerID
-        read_table_key = 'TableID-'+str(session['TableID'])
-        customers_id = cache.lrange(read_table_key, 0, -1)
-        for i in customers_id:
-            i = i.decode()
-            read_key = 'TID-'+str(session['TableID'])+'-CID-'+str(i)
+        # 读取同一桌所有的CustomerID
+        tableID = session['TableID']
+        read_table_key = 'TableID-'+str(tableID)
+        customer_ids = cache.lrange(read_table_key, 0, -1)
+        for customer_id in customer_ids:
+            customer_id = customer_id.decode()
+            read_key = 'TID-'+str(tableID)+'-CID-'+str(customer_id)
             read_current_order = str(cache.get(read_key).decode())
             read_current_order = eval(read_current_order)
-            # [need fix] 付款时，应该更新数据库而不是写入数据库
-            #将每个小订单写入数据库
-            new_order_number = orderlist_opt.insertOrderItem(orderDetail='json',
-                                                    total=read_current_order['price'], 
-                                                    tableID=read_current_order['table'],
-                                                    customerID=read_current_order['customerId'])
-            #确认支付
-            orderlist_opt.updateIsPaid(isPaid=1, orderID=new_order_id)                              
+            # get orderIDs on the same table and unpaid
+            orderIDs = []
+            _, result = selectOperator(tableName='OrderList', tableID=tableID, isPaid=0, result=["orderID"])
+            for r in result:
+                orderIDs.append(r["orderID"])
+            for orderID in orderIDs:
+                # 更新订单 & 确认支付
+                # [need fix] read_current_order['dish'] 有待考证
+                updateOperator(rstName='TINYHIPPO', pwd='123456', tableName='OrderList', orderID=orderID,
+                        new_orderDetail=read_current_order['dish'], new_total=read_current_order['price'], new_isPaid=1)
         dump_json = jsonify("OK")
     return json_response(dump_json)
 
-#顾客查看历史
+# 顾客查看历史
 @app.route('/restaurant/customer/history', methods=['GET'])
 def customer_history():
     dump_json = jsonify("error")
     if (session.get('CustomerID') == None):
         return json_response(dump_json)
-    # [need fix]
-    all_order = orderlist_opt.selectAllOrder()
+    # get orderIDs by CustomerID
+    customerOrderIDs = []
+    # [need fix] session['CustomerID'] 是什么类型？？？
+    _, result = selectOperator(tableName='OrderList', customerID=session['CustomerID'], result=["orderID"])
+    for r in result:
+        customerOrderIDs.append(r["orderID"])
     history_json = []
-    #查找Customer对应的订单记录
-    for row in all_order:
-        if row[8] == session['CustomerID']:
-            history_json.append(row[2])
+    # 查找Customer对应的订单记录
+    for cOrderID in customerOrderIDs:
+        # get order details
+        orderDetail = selectUniqueItem(tableName='OrderList', orderID=cOrderID, result=["orderDetail"])
+        history_json.append(orderDetail)
     dump_json = jsonify(history_json)
     return json_response(dump_json)
 
-#顾客账号获取用户自身信息 
+# 顾客账号获取用户自身信息 
 @app.route('/restaurant/customer/self', methods=['GET'])
 def customer_info():
     dump_json = jsonify("Error")
@@ -342,7 +347,7 @@ def customer_post_payment():
 # 餐厅账号进行或退出登录
 @app.route('/restaurant/session', methods=['POST', 'DELETE'])
 def restaurant_login():
-    #将餐厅账号的信息存放至session
+    # 将餐厅账号的信息存放至session
     if request.method == 'POST':
         if not request.json or not 'phone' or not 'password' in request.json:
             abort(400)
@@ -416,11 +421,11 @@ def restaurant_category():
     if request.method == 'POST':
         if not request.json:
             abort(400)
-        #dish的插入需要登录restaurant
+        # dish的插入需要登录restaurant
         dish_opt.manageDishTable(restaurantName='TINYHIPPO', password='123456')
         restaurantID = selectUniqueItem(tableName="Restaurant", restaurantName='TINYHIPPO', password='123456', result=["restaurantID"])
         # [need fix] 静态信息插入??? 'dish1'
-        #description的信息需要改动
+        # description的信息需要改动
         dish_opt.insertDishItem(dishName='dish1',
                                 dishDescription="",
                                 price=12,
@@ -446,12 +451,12 @@ def restaurant_dish_change(dish_id):
         # updateOperator(rstName='TINYHIPPO', pwd='123456', tableName="Dish", dishID=dish_id, new_dishTypeID=request.json['CategoryID'])
 
         # POST信息中不包含OnSales
-        #dish_opt.updateOnSaleWithDishID(onSale, dish_id)
+        # dish_opt.updateOnSaleWithDishID(onSale, dish_id)
         updateOperator(rstName='TINYHIPPO', pwd='123456', tableName="Dish", dishID=dish_id, new_price=request.json['price'])
         updateOperator(rstName='TINYHIPPO', pwd='123456', tableName="Dish", dishID=dish_id, new_dishImageURL=request.json['imageURL'])
         updateOperator(rstName='TINYHIPPO', pwd='123456', tableName="Dish", dishID=dish_id, new_dishHot=request.json['hot'])
         updateOperator(rstName='TINYHIPPO', pwd='123456', tableName="Dish", dishID=dish_id, new_monthlySales=request.json['monthlySales'])
-        # [need fix]
+        # [need fix] 不能修改菜品的评论
         # dish_opt.updateDishCommentWithDishID(
         #     request.json['description']['comment'], dish_id)
         dump_json = jsonify("Update Dish")
@@ -527,6 +532,10 @@ def restaurant_order():
     dump_json = jsonify(number_order_json)
     return json_response(dump_json)
 
+# 插入假数据
+@app.route('/insert_fake_data2', methods=['GET'])
+def insert_fake_data2():
+    return data_importer.insert_fake_data2()
 
 # 处理404样式
 @app.errorhandler(404)
