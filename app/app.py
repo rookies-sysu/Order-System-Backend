@@ -153,27 +153,28 @@ def get_dish(dish_id):
     return json_response(jsonify(dish_json))
 
 
-# 顾客信息记录(传入CustomerID和TableID)
+# 顾客信息记录
 @app.route('/restaurant/customer/record', methods=['POST'])
 def customer_record():  
-    if session.get('CustomerID') == None and session.get('TableID') == None:
-        # 将用户信息记录至session并保存至redis
-        session['CustomerID'] = str(request.json['CustomerID'])
-        session['TableID'] = str(request.json['table'])
-        # 对某一张Table增添顾客(list操作)
-        cache.rpush('TableID-'+str(session['TableID']), session['CustomerID'])
-        # 将CustomerID和TableID组合作为key
-        new_key = 'TID-'+str(session['TableID'])+'-CID-'+str(session['CustomerID'])
-        cache.set(new_key, '')
-        dump_json = jsonify(new_key)
-        return json_response(dump_json)
-    dump_json = jsonify('Record is Finished')
+    # 将用户信息记录至session并保存至redis
+    session['CustomerID'] = str(request.json['CustomerID'])
+    session['TableID'] = str(request.json['table'])
+    # 记录用户的image和nickname
+    session['name'] = str(request.json['table'])
+    session['image'] = str(request.json['image'])
+    # 对某一张Table增添顾客(list操作)
+    cache.rpush('TableID-'+str(session['TableID']), session['CustomerID'])
+    # 将CustomerID和TableID组合作为key
+    new_key = 'TID-'+str(session['TableID'])+'-CID-'+str(session['CustomerID'])
+    cache.set(new_key, '')
+    dump_json = jsonify(new_key)
     return json_response(dump_json)
+
 
 # 顾客编写小订单
 @app.route('/restaurant/customer/edit', methods=['POST'])
 def customer_edit():
-    dump_json = jsonify("error")
+    dump_json = jsonify("CustomerID or TableID is None")
     if session.get('CustomerID') != None and session.get('TableID') != None:
         # 查找编写的edit-key
         edit_key = 'TID-'+str(session['TableID'])+'-CID-'+str(session['CustomerID'])
@@ -186,21 +187,24 @@ def customer_edit():
 # 顾客查看小订单  
 @app.route('/restaurant/customer/read', methods=['GET'])
 def customer_read():
-    dump_json = jsonify("error")
+    dump_json = jsonify("CustomerID or TableID is None")
     if session.get('CustomerID') != None and session.get('TableID') != None:
         # 查找要查看的read-key
         read_key = 'TID-'+str(session['TableID'])+'-CID-'+str(session['CustomerID'])
         read_current_order = str(cache.get(read_key).decode())
         # eval将字符串str当成有效的表达式来求值并返回计算结果(即json内容)
-        dump_json = jsonify({"items":eval(read_current_order)})
+        dump_json = jsonify({"items":eval(read_current_order),
+                            "customer_name":session['name'],
+                            "customer_image":session['image']})
     return json_response(dump_json)
 
 # 餐桌查看当前的Customer订单
 @app.route('/restaurant/table/read', methods=['GET'])
 def table_read():
-    dump_json = jsonify("error")
+    dump_json = jsonify("TableID is None")
     if session.get('TableID') != None:
-        items = []
+        table_items = []
+        single_item = []
         # 读取同一桌所有的CustomerID
         read_table_key = 'TableID-'+str(session['TableID'])
         customers_id = cache.lrange(read_table_key, 0, -1)
@@ -209,14 +213,17 @@ def table_read():
             # 加入每个Customer编写的小订单
             read_key = 'TID-'+str(session['TableID'])+'-CID-'+str(i)
             read_current_order = str(cache.get(read_key).decode())
-            items.append(eval(read_current_order))
-        dump_json = jsonify(items)
+            single_item.append(eval(read_current_order))
+            single_item.append({"customer_name":session['name'],
+                            "customer_image":session['image']})
+            table_items.append(single_item)
+        dump_json = jsonify(table_items)
     return json_response(dump_json)
 
 # 餐桌支付订单
 @app.route('/restaurant/table/payment', methods=['GET'])
 def table_payment():
-    dump_json = jsonify("error")
+    dump_json = jsonify("TableID is None")
     if session.get('TableID') != None:
         # 读取同一桌所有的CustomerID
         tableID = session['TableID']
@@ -237,6 +244,8 @@ def table_payment():
                 # [need fix] read_current_order['dish'] 有待考证
                 updateOperator(rstName='TINYHIPPO', pwd='123456', tableName='OrderList', orderID=orderID,
                         new_orderDetail=read_current_order['dish'], new_total=read_current_order['price'], new_isPaid=1)
+            cache.delete(read_key)
+        cache.delete(read_table_key)
         dump_json = jsonify("OK")
     return json_response(dump_json)
 
