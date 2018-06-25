@@ -10,6 +10,7 @@ def insert_fake_data2():
         # load jsons
         rDB = tools.get_config("./data/restaurant_database.json")
         mDB = tools.get_config("./data/menu_database.json")
+        rcDB = tools.get_config("./data/recommendation.json")
 
         # restaurant infomation
         for rInfo in rDB:
@@ -42,6 +43,9 @@ def insert_fake_data2():
             for dInfo in mInfo["foods"]:
                 dOpt.insertDishItem(dishName=dInfo["name"], dishDescription=dInfo["description"], 
                         price=dInfo["price"], dishImageURL=dInfo["image_url"], dishTypeID=dishTypeID)
+
+        for rcInfo in rcDB:
+            
 
         return 'insert fake data 2 success!'
     except:
