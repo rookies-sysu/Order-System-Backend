@@ -3,7 +3,7 @@ from dbOperators import *
 from tools import *
 
 def insert_fake_data2():
-    # try: 
+    try:
         # create tools
         tools = Tools()
 
@@ -12,7 +12,7 @@ def insert_fake_data2():
         mDB = tools.get_config("./data/menu_database.json")
         rcDB = tools.get_config("./data/recommendation.json")
 
-        # restaurant infomation
+        # restaurant information
         for rInfo in rDB:
             rOpt = restaurantOperator()
             rOpt.insertRestaurantItem(restaurantName=rInfo["restaurantName"],
@@ -27,7 +27,7 @@ def insert_fake_data2():
                 # QRlink
                 qrOpt.insertQRlinkItem(linkImageURL=tInfo["QRlink"]["linkImageURL"], tableNumber=tInfo["tableNumber"])
 
-        # menu infomation
+        # menu information
         for mInfo in mDB:
             rOpt = restaurantOperator()
             rOpt.manageRestaurantTable(restaurantName="TINYHIPPO", password="123456")
@@ -43,18 +43,17 @@ def insert_fake_data2():
             for dInfo in mInfo["foods"]:
                 dOpt.insertDishItem(dishName=dInfo["name"], dishDescription=dInfo["description"], 
                         price=dInfo["price"], dishImageURL=dInfo["image_url"], dishTypeID=dishTypeID)
-
+                        
+        # recommendation information
         rcOpt = RecommendationOperator()
         rcOpt.manageRecommendationTable(restaurantName="TINYHIPPO", password="123456")
         rcdOpt = RecommendationDetailsOperator()
-        # print(rcDB)   
         for rcInfo in rcDB["data"]:  
             rcOpt.insertRecommendationItem(title=rcInfo['title'], tag=rcInfo['tag'], imageURL=rcInfo['image'])
             rcid = selectUniqueItem(tableName="Recommendation", restaurantID=1, title=rcInfo['title'], result=["recommendationID"])
-            print('---------', rcid) 
-            for obj in rcInfo['details']: 
+            for obj in rcInfo['details']:
                 rcdOpt.insertRecommendationDetailsItem(recommendationID=rcid, dishID=obj["dish_id"], description=obj["description"])
-  
+        
         return 'insert fake data 2 success!'
-    # except:
-    #     return 'insert fake data 2 failed!'
+    except:
+        return 'insert fake data 2 failed!'
