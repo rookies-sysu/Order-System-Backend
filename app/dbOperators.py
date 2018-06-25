@@ -756,13 +756,13 @@ def selectUniqueItem(tableName, **kwargs):
     '''
     if len(kwargs["result"]) != 1:
         print("[FAILED] The number of 'result' is not one.")
-        return False, []
+        return ''
     key = kwargs["result"][0]
-    status, result = selectOperator(tableName=tableName, **kwargs)
+    _, result = selectOperator(tableName=tableName, **kwargs)
     unique = ''
     if len(result) == 1:
         unique = result[0][key]
-    return status, unique
+    return unique
 
 def updateOperator(rstName, pwd, tableName, **kwargs):
     '''

@@ -6,7 +6,7 @@ def insert_fake_data1():
         #############
         # Resturant #
         #############
-        rOpt = resturantOperator()
+        rOpt = restaurantOperator()
         # sign in
         rOpt.manageResturantTable(resturantName='test4', password='123456')
         # insert
