@@ -396,6 +396,7 @@ def restaurant_login():
             session.pop('password')
         dump_json = jsonify("Login Off")
         return json_response(dump_json)
+
 # 餐厅账号获取菜单或新增菜品
 @app.route('/restaurant/category', methods=['GET', 'POST'])
 def restaurant_category():
@@ -449,17 +450,23 @@ def restaurant_category():
         if not request.json:
             abort(400)
         # dish的插入需要登录restaurant
+        # TODO: 多个餐厅登陆
         dish_opt.manageDishTable(restaurantName='TINYHIPPO', password='123456')
         restaurantID = selectUniqueItem(tableName="Restaurant", restaurantName='TINYHIPPO', password='123456', result=["restaurantID"])
+        
+        name = str(request.json['name'])
+        price = int(request.json['price'])
+        imageURL = str(request.json['imageURL'])
+        dishID = int(request.json['DishID'])
+        categoryID = int(request.json['CategoryID'])
         # [need fix] 静态信息插入??? 'dish1'
         # description的信息需要改动
-        dish_opt.insertDishItem(dishName='dish1',
+        dish_opt.insertDishItem(dishName=name,
                                 dishDescription="",
-                                price=12,
-                                dishImageURL='url',
-                                dishTypeID=1)
-        dishID = selectUniqueItem(tableName="Dish", dishName='dish1', restaurantID=restaurantID, result=["dishTypeID"])
-        dump_json = jsonify({"DishID": dishID})
+                                price=price,
+                                dishImageURL=imageURL,
+                                dishTypeID=categoryID)
+        dump_json = jsonify("Insert Successfully")
         return json_response(dump_json)
 
 
