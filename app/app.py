@@ -483,7 +483,7 @@ def restaurant_dish_change(dish_id):
         updateOperator(rstName='TINYHIPPO', pwd='123456', tableName="Dish", dishID=dish_id, new_dishImageURL=request.json['imageURL'])
         updateOperator(rstName='TINYHIPPO', pwd='123456', tableName="Dish", dishID=dish_id, new_dishHot=request.json['description']['hot'])
         updateOperator(rstName='TINYHIPPO', pwd='123456', tableName="Dish", dishID=dish_id, new_monthlySales=request.json['description']['monthlySales'])
-        updateOperator(rstName='TINYHIPPO', pwd='123456', tableName="Dish", dishID=dish_id, new_monthlySales=request.json['description']['comment'])
+        updateOperator(rstName='TINYHIPPO', pwd='123456', tableName="Dish", dishID=dish_id, new_comment=request.json['description']['comment'])
         dump_json = jsonify("Update dish successfully")
         return json_response(dump_json)
     if request.method == 'DELETE':
