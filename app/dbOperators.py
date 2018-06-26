@@ -764,6 +764,28 @@ def selectUniqueItem(tableName, **kwargs):
         unique = result[0][key]
     return unique
 
+def selectResultSet(tableName, **kwargs):
+    '''
+    Input:
+        tableName: the name of the table
+        **kwargs: key-value of table
+    Output:
+        the status of selection
+        the result for the selection
+    '''
+    if len(kwargs["result"]) == 0:
+        print("[FAILED] The number of 'result' is not one.")
+        return ''
+    keys = kwargs["result"]
+    results = {}
+    _, result = selectOperator(tableName=tableName, **kwargs)
+    for key in keys:
+        results[key] = []
+    for r in result:
+        for key in keys:
+            results[key].append(r[key])
+    return results
+
 def updateOperator(rstName, pwd, tableName, **kwargs):
     '''
     Input:
