@@ -166,8 +166,11 @@ def customer_record():
     cache.sadd('TableID-'+str(session['TableID']), session['CustomerID'])
     # 将CustomerID和TableID组合作为key
     new_key = 'TID-'+str(session['TableID'])+'-CID-'+str(session['CustomerID'])
+    if cache.get(new_key) != None:
+        dump_json = jsonify(new_key+" had been Recorded before!")
+        return json_response(dump_json)        
     cache.set(new_key, '')
-    dump_json = jsonify(new_key)
+    dump_json = jsonify(new_key+" is Recorded")
     return json_response(dump_json)
 
 
@@ -178,10 +181,13 @@ def customer_edit():
     if session.get('CustomerID') != None and session.get('TableID') != None:
         # 查找编写的edit-key
         edit_key = 'TID-'+str(session['TableID'])+'-CID-'+str(session['CustomerID'])
-        # 更新编写的小订单
-        edit_update_order = request.json['items']
-        cache.set(edit_key, edit_update_order)
-        dump_json = jsonify(edit_key+' is Updated')
+        if cache.get(edit_key) != None:
+            # 更新编写的小订单
+            edit_update_order = request.json['items']
+            cache.set(edit_key, edit_update_order)
+            dump_json = jsonify(edit_key+' is Updated')
+        else:
+            dump_json = jsonify(edit_key+" cache had been clear!")
     return json_response(dump_json)
 
 # 顾客查看小订单  
@@ -191,11 +197,14 @@ def customer_read():
     if session.get('CustomerID') != None and session.get('TableID') != None:
         # 查找要查看的read-key
         read_key = 'TID-'+str(session['TableID'])+'-CID-'+str(session['CustomerID'])
-        read_current_order = str(cache.get(read_key).decode())
-        # eval将字符串str当成有效的表达式来求值并返回计算结果(即json内容)
-        dump_json = jsonify({"items":eval(read_current_order),
-                            "customer_name":session['name'],
-                            "customer_image":session['image']})
+        if cache.get(read_key) != None:
+            read_current_order = str(cache.get(read_key).decode())
+            # eval将字符串str当成有效的表达式来求值并返回计算结果(即json内容)
+            dump_json = jsonify({"items":eval(read_current_order),
+                                "customer_name":session['name'],
+                                "customer_image":session['image']})
+        else:
+            dump_json = jsonify(read_key+" cache had been clear!")
     return json_response(dump_json)
 
 # 餐桌查看当前的Customer订单
@@ -205,8 +214,12 @@ def table_read():
     if session.get('TableID') != None:
         table_items = []
         single_item = []
-        # 读取同一桌所有的CustomerID
         read_table_key = 'TableID-'+str(session['TableID'])
+        # 判断table上是否有customer
+        if cache.scard(read_table_key) == 0:
+            dump_json = jsonify(read_table_key+" cache had been clear!")
+            return json_response(dump_json)
+        # 读取同一桌所有的CustomerID    
         customers_ids = cache.smembers(read_table_key)
         for i in customers_ids:
             i = i.decode()
@@ -228,6 +241,10 @@ def table_payment():
         # 读取同一桌所有的CustomerID
         tableID = session['TableID']
         read_table_key = 'TableID-'+str(tableID)
+        # 判断table上是否有customer
+        if cache.scard(read_table_key) == 0:
+            dump_json = jsonify(read_table_key+" cache had been clear!")
+            return json_response(dump_json)
         customer_ids = cache.smembers(read_table_key)
         for customer_id in customer_ids:
             customer_id = customer_id.decode()
@@ -248,6 +265,7 @@ def table_payment():
         cache.delete(read_table_key)
         dump_json = jsonify("OK")
     return json_response(dump_json)
+
 
 # 顾客查看历史
 @app.route('/restaurant/customer/history', methods=['GET'])
