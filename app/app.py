@@ -255,7 +255,7 @@ def table_payment():
 
             orderlist_opt.manageOrderListTable(restaurantName='TINYHIPPO', password='123456')
             orderlist_opt.insertOrderItem(orderDetail=read_current_order['dish'],
-                            total=read_current_order['price'], customerID=customer_id, tableID=tableID)
+                            total=read_current_order['price'], customerID=customer_id, tableID=int(tableID))
                             
             # get orderIDs on the same table and unpaid
             orderIDs = []
