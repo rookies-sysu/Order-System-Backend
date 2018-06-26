@@ -411,20 +411,17 @@ class dishOperator:
         else:
             print('[FAILED] Please sign in first.')
         return False
-    
-    # Delete operator
+    deleteDishItemWithDishID
     def deleteDishItemWithDishID(self, dishID):
         if self.hasSignedIn:
             if identifyOperator(tableName="Dish", dishID=dishID):
                 # check authority of restaurant
-                _, result = selectOperator(tableName="Dish", dishID=dishID, result=["restaurantID"])
-                restaurantID = result[0]["restaurantID"]
+                restaurantID = selectUniqueItem(tableName="Dish", dishID=dishID, result=["restaurantID"])
                 if restaurantID != self.restaurantID:
                     print("[FAILED] No authority to Delete other's Dish items.")
                     return False
                 # get dish name
-                _, result = selectOperator(tableName="Dish", dishID=dishID, result=["dishName"])
-                dishName = result[0]["dishName"]
+                dishName = selectUniqueItem(tableName="Dish", dishID=dishID, result=["dishName"])
                 # delete dish by id
                 sql = """DELETE FROM Dish
                            WHERE dishID=%d;""" % dishID

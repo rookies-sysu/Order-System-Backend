@@ -92,7 +92,7 @@ def testRedis():
 def restaurant_recommendation():
     dish_json = []
     restaurant_id = request.args.get('restaurant_id')
-    _, result = selectOperator(tableName="Recommendation", restaurantID=1, result=["recommendationID"])
+    _, result = selectOperator(tableName="Recommendation", restaurantID=restaurant_id, result=["recommendationID"])
     
     recommendation_ids = []
     for r in result:
@@ -185,16 +185,17 @@ def customer_edit():
         edit_key = 'TID-'+str(session['TableID'])+'-CID-'+str(session['CustomerID'])
         if cache.get(edit_key) != None:
             # 更新编写的小订单
-            edit_update_order = request.json['items']
+            edit_update_order = request.json['items'] # !!![need fix] 不是没有 'items' 吗？
             cache.set(edit_key, edit_update_order)
             dump_json = jsonify(edit_key+' is Updated')
         else:
             dump_json = jsonify(edit_key+" cache had been clear!")
     return json_response(dump_json)
 
-# 顾客查看小订单  
+# 顾客查看小订单
 @app.route('/restaurant/customer/read', methods=['GET'])
 def customer_read():
+    # !!! [need fix] 需要核对一下输入输出
     dump_json = jsonify("CustomerID or TableID is None")
     if session.get('CustomerID') != None and session.get('TableID') != None:
         # 查找要查看的read-key
@@ -212,6 +213,7 @@ def customer_read():
 # 餐桌查看当前的Customer订单
 @app.route('/restaurant/table/read', methods=['GET'])
 def table_read():
+    # !!! [need fix] 需要核对一下输入输出
     dump_json = jsonify("TableID is None")
     if session.get('TableID') != None:
         table_items = []
@@ -240,6 +242,11 @@ def table_read():
 def table_payment():
     dump_json = jsonify("TableID is None")
     if session.get('TableID') != None:
+        # get info of restaurant
+        restaurantID = selectUniqueItem(tableName="Restaurant", restaurantName='TINYHIPPO', result=["restaurantID"])
+        rstName = selectUniqueItem(tableName="Restaurant", restaurantID=restaurantID, result=["restaurantName"])
+        pwd = selectUniqueItem(tableName="Restaurant", restaurantID=restaurantID, result=["password"])
+        orderlist_opt.manageOrderListTable(restaurantName=rstName, password=pwd)
         # 读取同一桌所有的CustomerID
         tableID = session['TableID']
         read_table_key = 'TableID-'+str(tableID)
@@ -253,21 +260,11 @@ def table_payment():
             read_key = 'TID-'+str(tableID)+'-CID-'+str(customer_id)
             read_current_order = str(cache.get(read_key).decode())
             read_current_order = eval(read_current_order)
-
-            orderlist_opt.manageOrderListTable(restaurantName='TINYHIPPO', password='123456')
-            orderlist_opt.insertOrderItem(orderDetail=read_current_order['dish'],
+            # 插入订单 & 确认支付
+            # !!! [need fix] read_current_order['dish'] 有待考证
+            orderNumber = orderlist_opt.insertOrderItem(orderDetail=read_current_order['dish'],
                             total=read_current_order['price'], customerID=customer_id, tableID=int(tableID))
-                            
-            # get orderIDs on the same table and unpaid
-            orderIDs = []
-            _, result = selectOperator(tableName='OrderList', tableID=tableID, isPaid=0, result=["orderID"])
-            for r in result:
-                orderIDs.append(r["orderID"])
-            for orderID in orderIDs:
-                # 更新订单 & 确认支付
-                # [need fix] read_current_order['dish'] 有待考证
-                updateOperator(rstName='TINYHIPPO', pwd='123456', tableName='OrderList', orderID=orderID,
-                        new_orderDetail=read_current_order['dish'], new_total=read_current_order['price'], new_isPaid=1)
+            updateOperator(rstName=rstName, pwd=pwd, tableName="OrderList", orderNumber=orderNumber, new_isPaid=True)
             cache.delete(read_key)
         cache.delete(read_table_key)
         dump_json = jsonify("OK")
@@ -282,7 +279,7 @@ def customer_history():
         return json_response(dump_json)
     # get orderIDs by CustomerID
     customerOrderIDs = []
-    # [need fix] session['CustomerID'] 是什么类型？？？
+    # get customer OrderIDs
     _, result = selectOperator(tableName='OrderList', customerID=session['CustomerID'], result=["orderID"])
     for r in result:
         customerOrderIDs.append(r["orderID"])
@@ -306,8 +303,8 @@ def customer_info():
 # 顾客账号获取菜单
 @app.route('/restaurant/customer/category', methods=['GET'])
 def customer_get_category():
-    # [need fix] 需要 RestaurantID
-    restaurantID = selectUniqueItem(tableName="Restaurant", restaurantName='TINYHIPPO', password='123456', result=["restaurantID"])
+    # get restaurant ID
+    restaurantID = selectUniqueItem(tableName="Restaurant", restaurantName='TINYHIPPO', result=["restaurantID"])
     # get all dishTypeIDs by restaurantID
     dishTypeIDs = []
     _, result = selectOperator(tableName="DishType", restaurantID=restaurantID, result=["dishTypeID"])
@@ -354,15 +351,27 @@ def customer_get_category():
 def customer_post_order():
     if not request.json:
         abort(400)
+    # get info of restaurant
+    restaurantID = selectUniqueItem(tableName="Restaurant", restaurantName='TINYHIPPO', result=["restaurantID"])
+    rstName = selectUniqueItem(tableName="Restaurant", restaurantID=restaurantID, result=["restaurantName"])
+    pwd = selectUniqueItem(tableName="Restaurant", restaurantID=restaurantID, result=["password"])
+    orderlist_opt.manageOrderListTable(restaurantName=rstName, password=pwd)
     # 订单信息
-    dish_json = str(request.json['items']['dish'])
-    price = request.json['items']['price']
-    table = request.json['items']['table']
-    customerId = request.json['items']['customerId']
+    dish_json = str(request.json['dish'])
+    price = float(request.json['price'])
+    tableNumber = int(request.json['table'])
+    tableID = selectUniqueItem(tableName="RestaurantTable", tableNumber=tableNumber, result=["tableID"])
+    customerId = str(request.json['customerId'])
     # 生成新订单
-    # 目前dish_json内容无法插入
-    new_order_number = orderlist_opt.insertOrderItem(orderDetail=dish_json,
-                                                 total=price, tableID=table, customerID=customerId)
+    # !!! [need fix] 将订单加入cache
+    # # 目前dish_json内容无法插入
+    # new_order_number = orderlist_opt.insertOrderItem(orderDetail=dish_json,
+    #                                              total=price, tableID=tableID, customerID=customerId)
+
+    ################################
+    # 暂时为定值，以正常运行
+    new_order_number = 1
+    ################################
 
     # 返回订单ID
     dump_json = jsonify({"OrderID": new_order_number})
@@ -373,8 +382,14 @@ def customer_post_order():
 def customer_post_payment():
     if not request.json:
         abort(400)
+    # get info of restaurant
+    restaurantID = selectUniqueItem(tableName="Restaurant", restaurantName='TINYHIPPO', result=["restaurantID"])
+    rstName = selectUniqueItem(tableName="Restaurant", restaurantID=restaurantID, result=["restaurantName"])
+    pwd = selectUniqueItem(tableName="Restaurant", restaurantID=restaurantID, result=["password"])
     # 改变支付状态
-    updateOperator(rstName='TINYHIPPO', pwd='123456', tableName="OrderList", orderID=request.json['items']['OrderID'], new_isPaid=request.json['items']['payment'])
+    orderID = int(request.json['OrderID'])
+    isPaid = bool(request.json['payment'])
+    updateOperator(rstName=rstName, pwd=pwd, tableName="OrderList", orderID=orderID, new_isPaid=isPaid)
     dump_json = jsonify("Paid is Updated")
     return json_response(dump_json)
 
@@ -389,7 +404,6 @@ def restaurant_login():
         phone = str(request.json['phone'])
         password = str(request.json['password'])
         restaurantName = selectUniqueItem(tableName="Restaurant", phone=phone, password=password, result=["restaurantName"])
-        session['restaurantID'] = selectUniqueItem(tableName="Restaurant", phone=phone, password=password, result=["restaurantID"])
         email = selectUniqueItem(tableName="Restaurant", phone=phone, password=password, result=["email"])
         # 操作restaurant
         restaurant_opt.manageRestaurantTable(restaurantName=restaurantName, password=password)
@@ -408,18 +422,21 @@ def restaurant_login():
         }
         dump_json = jsonify(restaurant_json)
         return json_response(dump_json)
-    if request.method == 'DELETE':
-        if session.get('restaurantID') != None:
-            session.pop('restaurantID')
+    elif request.method == 'DELETE':
+        # if session.get('restaurantID') != None:
+        #     session.pop('restaurantID')
         dump_json = jsonify("Login Off")
         return json_response(dump_json)
+    else:
+        # neither 'get' nor 'post'
+        abort(400)
 
 # 餐厅账号获取菜单或新增菜品
 @app.route('/restaurant/category', methods=['GET', 'POST'])
 def restaurant_category():
-    if request.method == 'GET' and session.get('restaurantID') != None:
+    if request.method == 'GET':
         # 需要 RestaurantID
-        restaurantID = session['restaurantID']
+        restaurantID = selectUniqueItem(tableName="Restaurant", restaurantName='TINYHIPPO', result=["restaurantID"])
         # get all dishTypeIDs by restaurantID
         result = selectResultSet(tableName="DishType", restaurantID=restaurantID, result=["dishTypeID"])
         dishTypeIDs = result["dishTypeID"]
@@ -454,18 +471,21 @@ def restaurant_category():
             })
         dump_json = jsonify(menu_json)
         return json_response(dump_json)
-    if request.method == 'POST':
-        if not request.json and session.get('restaurantID') != None:
+    elif request.method == 'POST':
+        if not request.json:
             abort(400)
-        # dish的插入需要登录restaurant
-        restaurantID = session['restaurantID']
-
+        # get info of restaurant
+        restaurantID = selectUniqueItem(tableName="Restaurant", restaurantName='TINYHIPPO', result=["restaurantID"])
+        rstName = selectUniqueItem(tableName="Restaurant", restaurantID=restaurantID, result=["restaurantName"])
+        pwd = selectUniqueItem(tableName="Restaurant", restaurantID=restaurantID, result=["password"])
+        # 获取 POST 信息
         name = str(request.json['name'])
         price = float(request.json['price'])
         imageURL = str(request.json['imageURL'])
         dishID = int(request.json['DishID'])
         categoryID = int(request.json['CategoryID'])
-        # 默认不管 description
+        # 插入订单，默认不管 description
+        dish_opt.manageDishTable(restaurantName=rstName, password=pwd)
         dish_opt.insertDishItem(dishName=name,
                                 dishDescription="",
                                 price=price,
@@ -473,22 +493,24 @@ def restaurant_category():
                                 dishTypeID=categoryID)
         dump_json = jsonify("Insert Successfully")
         return json_response(dump_json)
+    else:
+        # neither 'get' nor 'post'
+        abort(400)
 
 
 # 餐厅账号修改菜品信息或删除菜品
 @app.route('/restaurant/dish/<int:dish_id>', methods=['PUT', 'DELETE'])
 def restaurant_dish_change(dish_id):
-    if request.method == 'PUT' and session.get('restaurantID') != None:
+    dish_id = int(dish_id)
+    if request.method == 'PUT':
         if not request.json:
             abort(400)
-        restaurantID = session['restaurantID']
-        # 不注释这句话会报错： longj
-        # update dishType [need fix]
-        # dishTypeID = selectUniqueItem(tableName="Dish", dishID=dish_id, result=["dishTypeID"])
-        # updateOperator(rstName='TINYHIPPO', pwd='123456', tableName="Dish", dishID=dish_id, new_dishTypeID=request.json['CategoryID'])
+        # get info of restaurant
+        restaurantID = selectUniqueItem(tableName="Restaurant", restaurantName='TINYHIPPO', result=["restaurantID"])
         rstName = selectUniqueItem(tableName="Restaurant", restaurantID=restaurantID, result=["restaurantName"])
         pwd = selectUniqueItem(tableName="Restaurant", restaurantID=restaurantID, result=["password"])
         # 根据POST信息修改dish 需要先登录restaurant
+        updateOperator(rstName=rstName, pwd=pwd, tableName="Dish", dishID=dish_id, new_dishTypeID=int(request.json['CategoryID']))
         updateOperator(rstName=rstName, pwd=pwd, tableName="Dish", dishID=dish_id, new_dishName=str(request.json['name']))
         updateOperator(rstName=rstName, pwd=pwd, tableName="Dish", dishID=dish_id, new_price=float(request.json['price']))
         updateOperator(rstName=rstName, pwd=pwd, tableName="Dish", dishID=dish_id, new_dishImageURL=str(request.json['imageURL']))
@@ -497,18 +519,32 @@ def restaurant_dish_change(dish_id):
         # updateOperator(rstName=rstName, pwd=pwd, tableName="Dish", dishID=dish_id, new_comment=request.json['description']['comment'])
         dump_json = jsonify("Update dish successfully")
         return json_response(dump_json)
-    if request.method == 'DELETE' and session.get('restaurantID') != None:
+    elif request.method == 'DELETE':
+        # get info of restaurant
+        restaurantID = selectUniqueItem(tableName="Restaurant", restaurantName='TINYHIPPO', result=["restaurantID"])
+        rstName = selectUniqueItem(tableName="Restaurant", restaurantID=restaurantID, result=["restaurantName"])
+        pwd = selectUniqueItem(tableName="Restaurant", restaurantID=restaurantID, result=["password"])
+        dish_opt.manageDishTable(restaurantName=rstName, password=pwd)
+        # delete dish item
         dish_opt.deleteDishItemWithDishID(dishID=dish_id)
         dump_json = jsonify("Delete dish successfully")
         return json_response(dump_json)
+    else:
+        # neither 'get' nor 'post'
+        abort(400)
 
 
 # 餐厅账号新增分类
 @app.route('/restaurant/category/', methods=['POST'])
 def restaurant_category_add():
     # 异常返回
-    if not request.json or (not 'name' in request.json) or session.get('restaurantID') == None:
+    if not request.json or (not 'name' in request.json):
         abort(400)
+    # get info of restaurant
+    restaurantID = selectUniqueItem(tableName="Restaurant", restaurantName='TINYHIPPO', result=["restaurantID"])
+    rstName = selectUniqueItem(tableName="Restaurant", restaurantID=restaurantID, result=["restaurantName"])
+    pwd = selectUniqueItem(tableName="Restaurant", restaurantID=restaurantID, result=["password"])
+    dish_type_opt.manageDishTypeTable(restaurantName=rstName, password=pwd)
     # 插入新的分类
     new_dish_type_name = str(request.json['name'])
     dish_type_opt.insertDishTypeItem(dishTypeName=new_dish_type_name)
@@ -518,22 +554,27 @@ def restaurant_category_add():
 # 餐厅账号修改分类信息或删除分类
 @app.route('/restaurant/category/<int:category_id>', methods=['PUT', 'DELETE'])
 def restaurant_category_change(category_id):
-    if request.method == 'PUT' and session.get('restaurantID') != None:
+    # get info of restaurant
+    restaurantID = selectUniqueItem(tableName="Restaurant", restaurantName='TINYHIPPO', result=["restaurantID"])
+    rstName = selectUniqueItem(tableName="Restaurant", restaurantID=restaurantID, result=["restaurantName"])
+    pwd = selectUniqueItem(tableName="Restaurant", restaurantID=restaurantID, result=["password"])
+    if request.method == 'PUT':
         if (not request.json) or (not identifyOperator(tableName="DishType", dishTypeID=category_id)):
             abort(400)
         # 修改分类信息
-        restaurantID = session['restaurantID']
-        rstName = selectUniqueItem(tableName="Restaurant", restaurantID=restaurantID, result=["restaurantName"])
-        pwd = selectUniqueItem(tableName="Restaurant", restaurantID=restaurantID, result=["password"])
-        updateOperator(rstName='TINYHIPPO', pwd='123456', tableName="DishType", dishTypeID=category_id, new_dishTypeName=request.json['items']['name'])
+        updateOperator(rstName=rstName, pwd=pwd, tableName="DishType", dishTypeID=category_id, new_dishTypeName=str(request.json['name']))
         dump_json = jsonify("Update DishType")
         return json_response(dump_json)
     if request.method == 'DELETE':
         if not identifyOperator(tableName="DishType", dishID=category_id):
             abort(400)
+        dish_type_opt.manageDishTypeTable(restaurantName=rstName, password=pwd)
         dish_type_opt.deleteDishTypeByID(dishTypeID=category_id)
         dump_json = jsonify("Delete DishType")
         return json_response(dump_json)
+    else:
+        # neither 'get' nor 'post'
+        abort(400)
 
 # 餐厅账号获取订单
 @app.route('/restaurant/order', methods=['GET'])
@@ -543,7 +584,7 @@ def restaurant_order():
     # 第几页订单
     pageNumber = int(request.args.get('pageNumber'))
     # get restaurantID
-    restaurantID = selectUniqueItem(tableName="Restaurant", restaurantName='TINYHIPPO', password='123456', result=["restaurantID"])
+    restaurantID = selectUniqueItem(tableName="Restaurant", restaurantName='TINYHIPPO', result=["restaurantID"])
     # get all orderIDs by restaurantID
     orderIDs = []
     _, result = selectOperator(tableName="OrderList", restaurantID=restaurantID, result=["orderID"])
