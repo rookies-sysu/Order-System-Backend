@@ -49,6 +49,7 @@ orderlist_opt = orderListOperator()
 
 cache = redis.Redis(host='redis', port=6379)
 
+
 ############################################################################################################
 # docker 开发测试api接口
 def get_hit_count():
@@ -252,6 +253,11 @@ def table_payment():
             read_key = 'TID-'+str(tableID)+'-CID-'+str(customer_id)
             read_current_order = str(cache.get(read_key).decode())
             read_current_order = eval(read_current_order)
+
+            orderlist_opt.manageOrderListTable(restaurantName='TINYHIPPO', password='123456')
+            orderlist_opt.insertOrderItem(orderDetail=read_current_order['dish'],
+                            total=read_current_order['price'], customerID=customer_id, tableID=int(tableID))
+                            
             # get orderIDs on the same table and unpaid
             orderIDs = []
             _, result = selectOperator(tableName='OrderList', tableID=tableID, isPaid=0, result=["orderID"])
@@ -355,11 +361,11 @@ def customer_post_order():
     customerId = request.json['items']['customerId']
     # 生成新订单
     # 目前dish_json内容无法插入
-    new_order_id = orderlist_opt.insertOrderItem(orderDetail=dish_json,
+    new_order_number = orderlist_opt.insertOrderItem(orderDetail=dish_json,
                                                  total=price, tableID=table, customerID=customerId)
 
     # 返回订单ID
-    dump_json = jsonify({"OrderID": new_order_id})
+    dump_json = jsonify({"OrderID": new_order_number})
     return json_response(dump_json)
 
 # 顾客账号支付订单
