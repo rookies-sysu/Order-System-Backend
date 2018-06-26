@@ -400,9 +400,6 @@ def restaurant_login():
 # 餐厅账号获取菜单或新增菜品
 @app.route('/restaurant/category', methods=['GET', 'POST'])
 def restaurant_category():
-    # if request.method == 'OPTIONS':
-    #     dump_json = jsonify("None")
-    #     return json_response(dump_json)
     if request.method == 'GET':
         # 需要 RestaurantID
         restaurantID = selectUniqueItem(tableName="Restaurant", restaurantName='TINYHIPPO', password='123456', result=["restaurantID"])
@@ -450,7 +447,6 @@ def restaurant_category():
         if not request.json:
             abort(400)
         # dish的插入需要登录restaurant
-        # TODO: 多个餐厅登陆
         dish_opt.manageDishTable(restaurantName='TINYHIPPO', password='123456')
         restaurantID = selectUniqueItem(tableName="Restaurant", restaurantName='TINYHIPPO', password='123456', result=["restaurantID"])
         
@@ -459,8 +455,7 @@ def restaurant_category():
         imageURL = str(request.json['imageURL'])
         dishID = int(request.json['DishID'])
         categoryID = int(request.json['CategoryID'])
-        # [need fix] 静态信息插入??? 'dish1'
-        # description的信息需要改动
+        # 默认不管 description
         dish_opt.insertDishItem(dishName=name,
                                 dishDescription="",
                                 price=price,
@@ -476,31 +471,29 @@ def restaurant_dish_change(dish_id):
     if request.method == 'PUT':
         if not request.json | ~ identifyOperator(tableName="Dish", dishID=dish_id):
             abort(400)
-        # 根据POST信息修改dish 需要先登录restaurant
-        updateOperator(rstName='TINYHIPPO', pwd='123456', tableName="Dish", dishID=dish_id, new_dishName=request.json['name'])
 
         # 不注释这句话会报错： longj
         # update dishType [need fix]
         # dishTypeID = selectUniqueItem(tableName="Dish", dishID=dish_id, result=["dishTypeID"])
         # updateOperator(rstName='TINYHIPPO', pwd='123456', tableName="Dish", dishID=dish_id, new_dishTypeID=request.json['CategoryID'])
 
-        # POST信息中不包含OnSales
-        # dish_opt.updateOnSaleWithDishID(onSale, dish_id)
+        # 根据POST信息修改dish 需要先登录restaurant
+        updateOperator(rstName='TINYHIPPO', pwd='123456', tableName="Dish", dishID=dish_id, new_dishName=request.json['name'])
         updateOperator(rstName='TINYHIPPO', pwd='123456', tableName="Dish", dishID=dish_id, new_price=request.json['price'])
         updateOperator(rstName='TINYHIPPO', pwd='123456', tableName="Dish", dishID=dish_id, new_dishImageURL=request.json['imageURL'])
-        updateOperator(rstName='TINYHIPPO', pwd='123456', tableName="Dish", dishID=dish_id, new_dishHot=request.json['hot'])
-        updateOperator(rstName='TINYHIPPO', pwd='123456', tableName="Dish", dishID=dish_id, new_monthlySales=request.json['monthlySales'])
-        # [need fix] 不能修改菜品的评论
-        # dish_opt.updateDishCommentWithDishID(
-        #     request.json['description']['comment'], dish_id)
-        dump_json = jsonify("Update Dish")
+        updateOperator(rstName='TINYHIPPO', pwd='123456', tableName="Dish", dishID=dish_id, new_dishHot=request.json['description']['hot'])
+        updateOperator(rstName='TINYHIPPO', pwd='123456', tableName="Dish", dishID=dish_id, new_monthlySales=request.json['description']['monthlySales'])
+        updateOperator(rstName='TINYHIPPO', pwd='123456', tableName="Dish", dishID=dish_id, new_monthlySales=request.json['description']['comment'])
+        dump_json = jsonify("Update dish successfully")
         return json_response(dump_json)
     if request.method == 'DELETE':
         if not request.json | ~ identifyOperator(tableName="Dish", dishID=dish_id):
             abort(400)
         dish_opt.deleteDishItemWithDishID(dishID=dish_id)
-        dump_json = jsonify("Delete Dish")
+        dump_json = jsonify("Delete dish successfully")
         return json_response(dump_json)
+
+
 # 餐厅账号新增分类
 @app.route('/restaurant/category/', methods=['POST'])
 def restaurant_category_add():
