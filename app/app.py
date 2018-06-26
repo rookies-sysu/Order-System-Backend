@@ -519,6 +519,7 @@ def restaurant_dish_change(dish_id):
         # updateOperator(rstName=rstName, pwd=pwd, tableName="Dish", dishID=dish_id, new_comment=request.json['description']['comment'])
         dump_json = jsonify("Update dish successfully")
         return json_response(dump_json)
+<<<<<<< HEAD
     elif request.method == 'DELETE':
         # get info of restaurant
         restaurantID = selectUniqueItem(tableName="Restaurant", restaurantName='TINYHIPPO', result=["restaurantID"])
@@ -527,6 +528,10 @@ def restaurant_dish_change(dish_id):
         dish_opt.manageDishTable(restaurantName=rstName, password=pwd)
         # delete dish item
         dish_opt.deleteDishItemWithDishID(dishID=dish_id)
+=======
+    if request.method == 'DELETE' and session.get('restaurantID') != None:
+        #dish_opt.deleteDishItemWithDishID(dishID=dish_id)
+>>>>>>> ad80c99039d2430f8920c99ac85e61478d0d8a86
         dump_json = jsonify("Delete dish successfully")
         return json_response(dump_json)
     else:
