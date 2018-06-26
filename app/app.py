@@ -469,7 +469,7 @@ def restaurant_category():
 @app.route('/restaurant/dish/<int:dish_id>', methods=['PUT', 'DELETE'])
 def restaurant_dish_change(dish_id):
     if request.method == 'PUT':
-        if not request.json | ~ identifyOperator(tableName="Dish", dishID=dish_id):
+        if not request.json:
             abort(400)
 
         # 不注释这句话会报错： longj
@@ -487,7 +487,7 @@ def restaurant_dish_change(dish_id):
         dump_json = jsonify("Update dish successfully")
         return json_response(dump_json)
     if request.method == 'DELETE':
-        if not request.json | ~ identifyOperator(tableName="Dish", dishID=dish_id):
+        if not request.json:
             abort(400)
         dish_opt.deleteDishItemWithDishID(dishID=dish_id)
         dump_json = jsonify("Delete dish successfully")
