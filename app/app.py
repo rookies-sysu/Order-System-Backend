@@ -498,8 +498,6 @@ def restaurant_dish_change(dish_id):
         dump_json = jsonify("Update dish successfully")
         return json_response(dump_json)
     if request.method == 'DELETE' and session.get('restaurantID') != None:
-        if not request.json:
-            abort(400)
         dish_opt.deleteDishItemWithDishID(dishID=dish_id)
         dump_json = jsonify("Delete dish successfully")
         return json_response(dump_json)
