@@ -376,7 +376,7 @@ def customer_post_payment():
 def restaurant_login():
     # 将餐厅账号的信息存放至session
     if request.method == 'POST':
-        if not request.json or not 'phone' or not 'password' in request.json:
+        if not request.json or (not 'phone' in request.json) or (not 'password' in request.json):
             abort(400)
         phone = str(request.json['phone'])
         password = str(request.json['password'])
