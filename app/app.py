@@ -514,8 +514,8 @@ def restaurant_dish_change(dish_id):
         updateOperator(rstName=rstName, pwd=pwd, tableName="Dish", dishID=dish_id, new_dishName=str(request.json['name']))
         updateOperator(rstName=rstName, pwd=pwd, tableName="Dish", dishID=dish_id, new_price=float(request.json['price']))
         updateOperator(rstName=rstName, pwd=pwd, tableName="Dish", dishID=dish_id, new_dishImageURL=str(request.json['imageURL']))
-        updateOperator(rstName=rstName, pwd=pwd, tableName="Dish", dishID=dish_id, new_dishHot=bool(request.json['description']['hot']))
-        updateOperator(rstName=rstName, pwd=pwd, tableName="Dish", dishID=dish_id, new_monthlySales=int(request.json['description']['monthlySales']))
+        updateOperator(rstName=rstName, pwd=pwd, tableName="Dish", dishID=dish_id, new_dishHot=bool(request.json['description'][0]['hot']))
+        updateOperator(rstName=rstName, pwd=pwd, tableName="Dish", dishID=dish_id, new_monthlySales=int(request.json['description'][0]['monthlySales']))
         # updateOperator(rstName=rstName, pwd=pwd, tableName="Dish", dishID=dish_id, new_comment=request.json['description']['comment'])
         dump_json = jsonify("Update dish successfully")
         return json_response(dump_json)
@@ -566,7 +566,7 @@ def restaurant_category_change(category_id):
         dump_json = jsonify("Update DishType")
         return json_response(dump_json)
     if request.method == 'DELETE':
-        if not identifyOperator(tableName="DishType", dishID=category_id):
+        if not identifyOperator(tableName="DishType", dishTypeID=category_id):
             abort(400)
         dish_type_opt.manageDishTypeTable(restaurantName=rstName, password=pwd)
         dish_type_opt.deleteDishTypeByID(dishTypeID=category_id)
