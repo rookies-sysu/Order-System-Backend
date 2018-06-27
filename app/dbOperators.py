@@ -411,7 +411,6 @@ class dishOperator:
         else:
             print('[FAILED] Please sign in first.')
         return False
-    deleteDishItemWithDishID
     def deleteDishItemWithDishID(self, dishID):
         if self.hasSignedIn:
             if identifyOperator(tableName="Dish", dishID=dishID):
