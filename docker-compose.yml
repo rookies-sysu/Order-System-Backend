@@ -36,7 +36,8 @@ services:
     image: "redis:alpine"
     networks:
       - redis_nw
-
+    ports:
+      - "6379:6379"
   nginx:
     image: nginx:latest
     restart: always
