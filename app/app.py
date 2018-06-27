@@ -91,7 +91,7 @@ def testRedis():
 @app.route('/restaurant/recommendation')
 def restaurant_recommendation():
     dish_json = []
-    restaurant_id = request.args.get('restaurant_id')
+    restaurant_id = selectUniqueItem(tableName="Restaurant", restaurantName='TINYHIPPO', result=["restaurantID"])
     _, result = selectOperator(tableName="Recommendation", restaurantID=restaurant_id, result=["recommendationID"])
     
     recommendation_ids = []
