@@ -39,7 +39,10 @@ services:
     ports:
       - "6379:6379"
   nginx:
-    image: nginx:latest
+    # image: nginx:alpine
+    build:
+      context: .
+      dockerfile: ./nginx/Dockerfile
     restart: always
     ports:
       - "8080:80"
