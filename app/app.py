@@ -159,15 +159,15 @@ def get_dish(dish_id):
 @app.route('/restaurant/customer/record', methods=['POST'])
 def customer_record():  
     # 将用户信息记录至session并保存至redis
-    session['CustomerID'] = str(request.json['CustomerID'])
-    session['TableID'] = int(request.json['table'])
-    # 记录用户的image和nickname
-    session['name'] = str(request.json['name'])
-    session['image'] = str(request.json['image'])
+    session['CustomerID'] = request.json['customerId']
+    session['TableID'] = request.json['table']
+    # 记录用户的customerImageUrl和customerName至redis
+    cache.set(session['CustomerID']+'-ImageUrl', request.json['customerImageUrl'])
+    cache.set(session['CustomerID']+'-Name', request.json['customerName'])
     # 对某一张Table增添顾客(set操作 元素不重复)
     cache.sadd('TableID-'+str(session['TableID']), session['CustomerID'])
     # 将CustomerID和TableID组合作为key
-    new_key = 'TID-'+str(session['TableID'])+'-CID-'+str(session['CustomerID'])
+    new_key = 'TID-'+str(session['TableID'])+'-CID-'+session['CustomerID']
     if cache.get(new_key) != None:
         dump_json = jsonify(new_key+" had been Recorded before!")
         return json_response(dump_json)        
@@ -177,15 +177,15 @@ def customer_record():
 
 
 # 顾客编写小订单
-@app.route('/restaurant/customer/edit', methods=['POST'])
+@app.route('/restaurant/customer/edit', methods=['PUT'])
 def customer_edit():
     dump_json = jsonify("CustomerID or TableID is None")
     if session.get('CustomerID') != None and session.get('TableID') != None:
         # 查找编写的edit-key
-        edit_key = 'TID-'+str(session['TableID'])+'-CID-'+str(session['CustomerID'])
+        edit_key = 'TID-'+str(session['TableID'])+'-CID-'+session['CustomerID']
         if cache.get(edit_key) != None:
             # 更新编写的小订单
-            edit_update_order = request.json['items'] # !!![need fix] 不是没有 'items' 吗？
+            edit_update_order = request.json['orderInfo'] 
             cache.set(edit_key, edit_update_order)
             dump_json = jsonify(edit_key+' is Updated')
         else:
@@ -199,13 +199,17 @@ def customer_read():
     dump_json = jsonify("CustomerID or TableID is None")
     if session.get('CustomerID') != None and session.get('TableID') != None:
         # 查找要查看的read-key
-        read_key = 'TID-'+str(session['TableID'])+'-CID-'+str(session['CustomerID'])
+        read_key = 'TID-'+str(session['TableID'])+'-CID-'+session['CustomerID']
         if cache.get(read_key) != None:
-            read_current_order = str(cache.get(read_key).decode())
+            read_current_order = cache.get(read_key).decode()
+            if read_current_order != '':
+                read_current_order = eval(read_current_order)
+            name = cache.get(session['CustomerID']+"-Name").decode()
+            image = cache.get(session['CustomerID']+"-ImageUrl").decode()
             # eval将字符串str当成有效的表达式来求值并返回计算结果(即json内容)
-            dump_json = jsonify({"items":eval(read_current_order),
-                                "customer_name":session['name'],
-                                "customer_image":session['image']})
+            dump_json = jsonify({"orderInfo":read_current_order,
+                                "customerName":name,
+                                "customerImageUrl":image})
         else:
             dump_json = jsonify(read_key+" cache had been clear!")
     return json_response(dump_json)
@@ -217,7 +221,6 @@ def table_read():
     dump_json = jsonify("TableID is None")
     if session.get('TableID') != None:
         table_items = []
-        single_item = []
         read_table_key = 'TableID-'+str(session['TableID'])
         # 判断table上是否有customer
         if cache.scard(read_table_key) == 0:
@@ -230,10 +233,13 @@ def table_read():
             # 加入每个Customer编写的小订单
             read_key = 'TID-'+str(session['TableID'])+'-CID-'+str(i)
             read_current_order = str(cache.get(read_key).decode())
-            single_item.append(eval(read_current_order))
-            single_item.append({"customer_name":session['name'],
-                            "customer_image":session['image']})
-            table_items.append(single_item)
+            if read_current_order != '':
+                read_current_order = eval(read_current_order)      
+            name = cache.get(str(i)+"-Name").decode()
+            image = cache.get(str(i)+"-ImageUrl").decode()
+            table_items.append({"orderInfo":read_current_order,
+                                "customer_name":name,
+                                "customer_image":image})
         dump_json = jsonify(table_items)
     return json_response(dump_json)
 
@@ -257,15 +263,18 @@ def table_payment():
         customer_ids = cache.smembers(read_table_key)
         for customer_id in customer_ids:
             customer_id = customer_id.decode()
-            read_key = 'TID-'+str(tableID)+'-CID-'+str(customer_id)
+            read_key = 'TID-'+str(tableID)+'-CID-'+customer_id
             read_current_order = str(cache.get(read_key).decode())
-            read_current_order = eval(read_current_order)
-            # 插入订单 & 确认支付
-            # !!! [need fix] read_current_order['dish'] 有待考证
-            orderNumber = orderlist_opt.insertOrderItem(orderDetail=read_current_order['dish'],
-                            total=read_current_order['price'], customerID=customer_id, tableID=int(tableID))
-            updateOperator(rstName=rstName, pwd=pwd, tableName="OrderList", orderNumber=orderNumber, new_isPaid=True)
+            if read_current_order != '':     
+                read_current_order = eval(read_current_order)
+                # 插入订单 & 确认支付
+                # !!! [need fix] read_current_order['dish'] 有待考证
+                orderNumber = orderlist_opt.insertOrderItem(orderDetail=read_current_order['dish'],
+                                total=read_current_order['totalPrice'], customerID=customer_id, tableID=tableID)
+                updateOperator(rstName=rstName, pwd=pwd, tableName="OrderList", orderNumber=orderNumber, new_isPaid=True)
             cache.delete(read_key)
+            cache.delete(customer_id+"-Name")
+            cache.delete(customer_id+"-ImageUrl")
         cache.delete(read_table_key)
         dump_json = jsonify("OK")
     return json_response(dump_json)
