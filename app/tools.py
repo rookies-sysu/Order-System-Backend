@@ -50,6 +50,9 @@ class Tools:
         try:
             self.cursor.execute(sql)
             results = self.cursor.fetchall()
+            # if tableName == 'Restaurant':
+            #     print('hhh\n\n')
+            #     print(results)
             for row in results:
                 resultSet.append(row[0])
         except:

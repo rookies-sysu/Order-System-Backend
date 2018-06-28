@@ -548,7 +548,7 @@ class orderListOperator:
                     orderNumber = self.getMaxNumber() + 1
                     updateOperator(rstName=self.restaurantName, pwd=self.password, tableName="RestaurantTable", tableID=tableID, new_currentOrderNumber=orderNumber)
                 sql = """INSERT INTO OrderList(orderNumber, orderDetail, total, isPaid, status, editedTime, customerID, tableID, restaurantID)
-                            VALUES (%d, "%s", %f, %d, "%s", "%s", "%s", %d, %d);""" % (orderNumber, orderDetail, total, False, 'todo', now, customerID, tableID, self.restaurantID)
+                            VALUES (%d, "%s", %f, %d, "%s", "%s", "%s", %d, %d);""" % (orderNumber, str(orderDetail), total, False, 'todo', now, customerID, tableID, self.restaurantID)
                 tools.executeSQL(sql)
                 print("[SUCCESS] A new Order '%d' has been inserted to Table." % orderNumber)
                 return orderNumber
@@ -725,6 +725,10 @@ def selectOperator(tableName, **kwargs):
         the status of selection
         the result for the selection
     '''
+    if tableName == 'Restaurant':
+        pass
+        # print('keke')
+        # print(kwargs)
     # check the correction of keys
     keys = tools.getTableKeys(tableName=tableName)
     if not keys:
@@ -733,6 +737,8 @@ def selectOperator(tableName, **kwargs):
         kwargs["result"] = [keys[0]]
     keys.append("result")
     if not tools.checkKeysCorrection(input=kwargs, valid_keys=keys):
+        print(kwargs)
+        print(keys)
         return False, []
     result_str = ", ".join(key for key in kwargs["result"])
     condition_str = " AND ".join('{}="{}"'.format(key, kwargs[key]) for key in kwargs.keys() if key != 'result')
@@ -797,9 +803,9 @@ def updateOperator(rstName, pwd, tableName, **kwargs):
         print('[FAILED] The number of input is invalid.')
         return False
     # identify the restaurantName and password
-    if not identifyOperator(tableName="Restaurant", **{"restaurantName" : rstName, "password" : pwd}):
-        print('[FAILED] Username is not existed or password is wrong.')
-        return False
+    # if not identifyOperator(tableName="Restaurant", **{"restaurantName" : rstName, "password" : pwd}):
+    #     print('[FAILED] Username is not existed or password is wrong.')
+    #     return False
     # check the correction of keys
     keys = tools.getTableKeys(tableName=tableName)
     if not keys:
