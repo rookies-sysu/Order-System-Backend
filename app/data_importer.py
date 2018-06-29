@@ -40,9 +40,9 @@ def insert_fake_data2():
             dishTypeID = result[0]["dishTypeID"]
             # dish
             dOpt = dishOperator(restaurantName="TINYHIPPO", password="123456")
-            for dInfo in mInfo["foods"]:
-                dOpt.insertDishItem(dishName=dInfo["name"], dishDescription=dInfo["description"], 
-                        price=dInfo["price"], dishImageURL=dInfo["image_url"], dishTypeID=dishTypeID)
+            for dInfo in mInfo["dish"]:
+                dOpt.insertDishItem(dishName=dInfo["name"], dishDescription="", 
+                        price=dInfo["price"], dishImageURL=dInfo["imageUrl"], dishTypeID=dishTypeID)
                         
         # recommendation information
         rcOpt = RecommendationOperator()
