@@ -630,9 +630,16 @@ class RecommendationOperator:
     # Insert operator
     def insertRecommendationItem(self, title, tag, imageURL):
         if self.hasSignedIn:
+            # if not identifyOperator(tableName="Recommendation", recommendationID=recommendationID):
+            #     print("[FAILED] recommendationID '%d' has been existed." % recommendationID)
+            #     return False
+            if identifyOperator(tableName="Recommendation", title=title, restaurantID=self.restaurantID):
+                print("[FAILED] title '%s' has been existed." % title)
+                return False
             now = tools.getNow()
             sql = """INSERT INTO Recommendation(title, tag, imageURL, editedTime, restaurantID)
                     VALUES ("%s", "%s", "%s", "%s", %d);""" % (title, tag, imageURL, now, self.restaurantID)
+            
             tools.executeSQL(sql)
             print("[SUCCESS] A new recommendation '%s' inserted to Recommendation." % title)
             return True
@@ -725,10 +732,6 @@ def selectOperator(tableName, **kwargs):
         the status of selection
         the result for the selection
     '''
-    if tableName == 'Restaurant':
-        pass
-        # print('keke')
-        # print(kwargs)
     # check the correction of keys
     keys = tools.getTableKeys(tableName=tableName)
     if not keys:
@@ -737,8 +740,6 @@ def selectOperator(tableName, **kwargs):
         kwargs["result"] = [keys[0]]
     keys.append("result")
     if not tools.checkKeysCorrection(input=kwargs, valid_keys=keys):
-        print(kwargs)
-        print(keys)
         return False, []
     result_str = ", ".join(key for key in kwargs["result"])
     condition_str = " AND ".join('{}="{}"'.format(key, kwargs[key]) for key in kwargs.keys() if key != 'result')
@@ -819,7 +820,7 @@ def updateOperator(rstName, pwd, tableName, **kwargs):
     result_str = ", ".join("{}='{}'".format(key.replace("new_", ""), kwargs[key]) for key in kwargs.keys() if 'new' in key)
     condition_str = " AND ".join('{}="{}"'.format(key, kwargs[key]) for key in kwargs.keys() if 'new' not in key)
     condition = {}
-    for key in kwargs.keys():
+    for key in kwargs.keys(): 
         if 'new' not in key:
             condition[key] = kwargs[key]
     # execute sql
