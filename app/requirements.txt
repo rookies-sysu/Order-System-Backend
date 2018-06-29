@@ -1,5 +1,6 @@
 flask>=0.10
 Werkzeug>=0.9
-PyMySQL
+DBUtils
+PyMySQL==0.8.1
 redis
 flask-cors

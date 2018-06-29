@@ -143,15 +143,17 @@ def restaurant_recommendation():
         # get json info
         imageUrl = request.json['imageUrl']
         tag = request.json['tag']
-        title = request.json['title']
-        details = request.json['details']
+        title = request.json['title'] 
+        details = request.json['details'] 
         # insert recommendation item
         if not rcOpt.insertRecommendationItem(title=title, tag=tag, imageURL=imageUrl):
             dump_json = jsonify("Recommendation '%s' fail to insert." % title)
-            return json_response(dump_json)
-        recommendationId = selectUniqueItem(tableName='Recommendation', title=title, tag=tag, imageURL=imageUrl, restaurantID=restaurantID, result=['recommendationID'])
+            return json_response(dump_json) 
+        recommendationId = selectUniqueItem(tableName='Recommendation', title=title,  result=['recommendationID'])
+        result = selectOperator(tableName='Recommendation', title=title,  result=['recommendationID', 'title', 'res'])
+        print(result) 
         # insert relationship of recommendation and dishes
-        for detail in details:
+        for detail in details: 
             description = detail['description']
             dishName = detail['dishName']
             dishID = selectUniqueItem(tableName='Dish', dishName=dishName, restaurantID=restaurantID, result=['dishID'])
@@ -658,7 +660,7 @@ def restaurant_order():
 # 插入假数据
 @app.route('/insert_fake_data2', methods=['GET'])
 def insert_fake_data2():
-    return data_importer.insert_fake_data2()
+    return data_importer.insert_fake_data2() 
 
 # 处理404样式
 @app.errorhandler(404)

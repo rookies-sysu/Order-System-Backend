@@ -1,16 +1,20 @@
 import pymysql
+from DBUtils.PooledDB import PooledDB
 from tools import *
 import io
 import sys
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding='utf-8')
 
+import dbConfig as config
+
 # connect to dataset
-db = pymysql.connect(host='db',
-                     user='root',
-                     password='tiny-hippo',
-                     database='TINYHIPPO',
-                     charset='utf8')
-# create a cursor
+db = pymysql.connect(host=config.DB_HOST,
+                     user=config.DB_USER,
+                     password=config.DB_PASSWORD,
+                     database=config.DB_DATABASE,
+                     charset=config.DB_CHARSET)
+
+# convert character
 cursor = db.cursor()
 
 cursor.execute('SHOW TABLES')
@@ -18,8 +22,10 @@ tables=[]
 for row in cursor.fetchall(): tables.append(row)
 for row in tables: cursor.execute('ALTER TABLE %s CONVERT TO CHARACTER SET utf8 COLLATE utf8_general_ci;' % (row[0]))
 
+cursor.close()
+
 # create tools
-tools = Tools(db=db, cursor=cursor)
+tools = Tools()
 
 ## -----------------------------------------------------
 ## Table `TINYHIPPO`.`Restaurant`
@@ -47,7 +53,7 @@ class restaurantOperator():
         if self.checkRestaurantItem(restaurantName=restaurantName, password=password, phone=phone, email=email):
             sql = """INSERT INTO Restaurant(restaurantName, password, phone, email)
                        VALUES ("%s", "%s", "%s", "%s");""" % (restaurantName, password, phone, email)
-            tools.executeSQL(sql)
+            tools.modifyOpt(sql)
             print("[SUCCESS] Username '%s' registered." % restaurantName)
             self.manageRestaurantTable(restaurantName, password)
             return True
@@ -83,7 +89,7 @@ class restaurantOperator():
                     return False
                 sql = """DELETE FROM Restaurant
                            WHERE restaurantID=%d;""" % restaurantID
-                tools.executeSQL(sql)
+                tools.modifyOpt(sql)
                 print("[SUCCESS] Username '%s' has been deleted." % RestaurantName)
                 return True
             else:
@@ -140,7 +146,7 @@ class dishTypeOperator:
             if not identifyOperator(tableName="DishType", dishTypeName=dishTypeName, restaurantID=self.restaurantID):
                 sql = """INSERT INTO DishType(dishTypeName, restaurantID)
                            VALUES ("%s", %d);""" % (dishTypeName, self.restaurantID)
-                tools.executeSQL(sql)
+                tools.modifyOpt(sql)
                 print("[SUCCESS] DishTypeName '%s' inserted to DishType." % dishTypeName)
                 return True
             else:
@@ -164,7 +170,7 @@ class dishTypeOperator:
                 dishTypeName = result[0]["dishTypeName"]
                 sql = """DELETE FROM DishType
                            WHERE dishTypeID=%d;""" % dishTypeID
-                tools.executeSQL(sql)
+                tools.modifyOpt(sql)
                 print("[SUCCESS] DishTypeName '%s' has been deleted." % dishTypeName)
                 return True
             else:
@@ -219,7 +225,7 @@ class tableOperator:
             if not identifyOperator(tableName="RestaurantTable", tableNumber=tableNumber, restaurantID=self.restaurantID):
                 sql = """INSERT INTO RestaurantTable(tableNumber, currentOrderNumber, restaurantID)
                            VALUES (%d, %d, %d);""" % (tableNumber, -1, self.restaurantID)
-                tools.executeSQL(sql)
+                tools.modifyOpt(sql)
                 print("[SUCCESS] TableNumber '%d' inserted to RestaurantTable." % tableNumber)
                 return True
             else:
@@ -243,7 +249,7 @@ class tableOperator:
                 tableNumber = result[0]["tableNumber"]
                 sql = """DELETE FROM RestaurantTable
                            WHERE tableID=%d;""" % tableID
-                tools.executeSQL(sql)
+                tools.modifyOpt(sql)
                 print("[SUCCESS] RestaurantTable '%d' has been deleted." % tableNumber)
                 return True
             else:
@@ -305,7 +311,7 @@ class QRlinkOperator:
                     if not identifyOperator(tableName="QRlink", linkImageURL=linkImageURL):
                         sql = """INSERT INTO QRlink(linkImageURL, tableID)
                                 VALUES ("%s", %d);""" % (linkImageURL, tableID)
-                        tools.executeSQL(sql)
+                        tools.modifyOpt(sql)
                         print("[SUCCESS] linkImageURL '%s' has been inserted to QRlink." % linkImageURL)
                         return True
                     else:
@@ -334,7 +340,7 @@ class QRlinkOperator:
                 # delete QRlink item by ID
                 sql = """DELETE FROM QRlink
                            WHERE linkID=%d;""" % linkID
-                tools.executeSQL(sql)
+                tools.modifyOpt(sql)
                 print("[SUCCESS] The QRlink of TableID '%d' has been deleted." % tableID)
                 return True
             else:
@@ -360,7 +366,7 @@ class QRlinkOperator:
             if identifyOperator(tableName="QRlink", linkID=linkID):
                 sql = """DELETE FROM QRlink
                            WHERE tableID=%d;""" % tableID
-                tools.executeSQL(sql)
+                tools.modifyOpt(sql)
                 print("[SUCCESS] Delete tableID '%d'." % tableID)
                 return True
             else:
@@ -401,7 +407,7 @@ class dishOperator:
                 if not identifyOperator(tableName="Dish", dishName=dishName, restaurantID=self.restaurantID):
                     sql = """INSERT INTO Dish(dishName, dishDescription, onSale, price, dishImageURL, dishHot, monthlySales, restaurantID, dishTypeID)
                                VALUES ("%s", "%s", %d, %f, "%s", %d, %d, %d, %d);""" % (dishName, dishDescription, False, float(price), dishImageURL, 0, 0, self.restaurantID, dishTypeID)
-                    tools.executeSQL(sql)
+                    tools.modifyOpt(sql)
                     print("[SUCCESS] A new Dish '%s' has been inserted into Dishtype '%s'." % (dishName, dishTypeName))
                     return True
                 else:
@@ -424,7 +430,7 @@ class dishOperator:
                 # delete dish by id
                 sql = """DELETE FROM Dish
                            WHERE dishID=%d;""" % dishID
-                tools.executeSQL(sql)
+                tools.modifyOpt(sql)
                 print("[SUCCESS] The Dish '%s' has been deleted." % dishName)
                 return True
             else:
@@ -477,7 +483,7 @@ class dishCommentOperator:
             dishName = result[0]["dishName"]
             sql = """INSERT INTO DishComment(comment, dishID)
                        VALUES ('%s', %d);""" % (comment, dishID)
-            tools.executeSQL(sql)
+            tools.modifyOpt(sql)
             print("[SUCCESS] A new comment inserted to Dish '%s'." % dishName)
             return True
         print("[FAILED] dishID '%d' is not existed." % dishID)
@@ -491,7 +497,7 @@ class dishCommentOperator:
             dishID = result[0]["dishID"]
             sql = """DELETE FROM DishComment
                            WHERE dishCommentID=%d;""" % dishCommentID
-            tools.executeSQL(sql)
+            tools.modifyOpt(sql)
             print("[SUCCESS] A comment of DishID '%d' has been deleted." % dishID)
             return True
         print("[FAILED] DishCommentID '%d' is not existed." % dishCommentID)
@@ -549,7 +555,7 @@ class orderListOperator:
                     updateOperator(rstName=self.restaurantName, pwd=self.password, tableName="RestaurantTable", tableID=tableID, new_currentOrderNumber=orderNumber)
                 sql = """INSERT INTO OrderList(orderNumber, orderDetail, total, isPaid, status, editedTime, customerID, tableID, restaurantID)
                             VALUES (%d, "%s", %f, %d, "%s", "%s", "%s", %d, %d);""" % (orderNumber, str(orderDetail), total, False, 'todo', now, customerID, tableID, self.restaurantID)
-                tools.executeSQL(sql)
+                tools.modifyOpt(sql)
                 print("[SUCCESS] A new Order '%d' has been inserted to Table." % orderNumber)
                 return orderNumber
             else:
@@ -571,7 +577,7 @@ class orderListOperator:
                 # delete OrderList by ID
                 sql = """DELETE FROM OrderList
                             WHERE orderID=%d;""" % orderID
-                tools.executeSQL(sql)
+                tools.modifyOpt(sql)
                 print("[SUCCESS] The OrderID '%d' has been deleted." % orderID)
                 return True
             else:
@@ -591,7 +597,7 @@ class orderListOperator:
                 # delete OrderItems by tableID
                 sql = """DELETE FROM OrderList
                            WHERE tableID=%d;""" % tableID
-                tools.executeSQL(sql)
+                tools.modifyOpt(sql)
                 print("[SUCCESS] Delete OrderList items which stored tableID '%d'." % tableID)
                 return False
             else:
@@ -601,9 +607,8 @@ class orderListOperator:
         return False
     def getMaxNumber(self):
         sql = """SELECT MAX(orderNumber) FROM OrderList"""
-        cursor.execute(sql)
-        results = cursor.fetchall()
-        number = results[0][0]
+        results = tools.selectOpt(sql)
+        number = results[0]['MAX(orderNumber)']
         return 0 if number == None else int(number)
 
 ## -----------------------------------------------------
@@ -639,15 +644,14 @@ class RecommendationOperator:
             now = tools.getNow()
             sql = """INSERT INTO Recommendation(title, tag, imageURL, editedTime, restaurantID)
                     VALUES ("%s", "%s", "%s", "%s", %d);""" % (title, tag, imageURL, now, self.restaurantID)
-            
-            tools.executeSQL(sql)
+            tools.modifyOpt(sql)
             print("[SUCCESS] A new recommendation '%s' inserted to Recommendation." % title)
             return True
         else:
             print('[FAILED] Please sign in first.')
         return False
     # Delete operator
-    def deleteDishCommentByCommentID(self, recommendationID):
+    def deleteRecommendationByID(self, recommendationID):
         if self.hasSignedIn:
             if identifyOperator(tableName="Recommendation", recommendationID=recommendationID):
                 # check authority of restaurant
@@ -661,7 +665,7 @@ class RecommendationOperator:
                 title = result[0]["title"]
                 sql = """DELETE FROM Recommendation
                             WHERE recommendationID=%d;""" % recommendationID
-                tools.executeSQL(sql)
+                tools.modifyOpt(sql)
                 print("[SUCCESS] Recommendation '%s' has been deleted." % title)
                 return True
             else:
@@ -688,7 +692,7 @@ class RecommendationDetailsOperator:
                 title = selectUniqueItem(tableName="Recommendation", recommendationID=recommendationID, result=["title"])
                 sql = """INSERT INTO RecommendationDetails(recommendationID, dishID, description)
                            VALUES (%d, %d, "%s");""" % (recommendationID, dishID, description)
-                tools.executeSQL(sql)
+                tools.modifyOpt(sql)
                 print("[SUCCESS] A new relationship between Dish '%s' and Recommendation title '%s' created." % (dishName, title))
                 return True
             else:
@@ -703,7 +707,7 @@ class RecommendationDetailsOperator:
             # delete RecommendationDetails item by recommendationID
             sql = """DELETE FROM RecommendationDetails
                        WHERE recommendationID=%d;""" % recommendationID
-            tools.executeSQL(sql)
+            tools.modifyOpt(sql)
             print("[SUCCESS] All RecommendationDetails items whose recommendationID is '%d' has been delete." % recommendationID)
             return True
         print("[FAILED] recommendationID '%d' is not existed." % recommendationID)
@@ -713,7 +717,7 @@ class RecommendationDetailsOperator:
             # delete RecommendationDetails item by recommendationID
             sql = """DELETE FROM RecommendationDetails
                        WHERE dishID=%d;""" % dishID
-            tools.executeSQL(sql)
+            tools.modifyOpt(sql)
             print("[SUCCESS] All RecommendationDetails items whose dishID is '%d' has been delete." % dishID)
             return True
         print("[FAILED] dishID '%d' is not existed." % dishID)
@@ -740,12 +744,12 @@ def selectOperator(tableName, **kwargs):
         kwargs["result"] = [keys[0]]
     keys.append("result")
     if not tools.checkKeysCorrection(input=kwargs, valid_keys=keys):
-        return False, []
+        return False, [] 
     result_str = ", ".join(key for key in kwargs["result"])
     condition_str = " AND ".join('{}="{}"'.format(key, kwargs[key]) for key in kwargs.keys() if key != 'result')
     sql = """SELECT %s FROM %s
                WHERE %s""" % (result_str, tableName, condition_str)
-    result = tools.getResults(sql, keys=kwargs["result"])
+    result = tools.selectOpt(sql)
     return True, result
 
 def selectUniqueItem(tableName, **kwargs):
@@ -829,7 +833,7 @@ def updateOperator(rstName, pwd, tableName, **kwargs):
             sql = """UPDATE %s
                        SET %s
                        WHERE %s;""" % (tableName, result_str , condition_str)
-            tools.executeSQL(sql)
+            tools.modifyOpt(sql)
             print("[SUCCESS] %s has been updated to %s." % (result_str.split("=")[0], result_str.split("=")[1]) )
             return True
         except:

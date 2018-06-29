@@ -1,23 +1,30 @@
 import pymysql
 import json
+from dbPool import DBPool as dbPool
 
 class Tools:
-    def __init__(self, db=None, cursor=None):
-        self.db = db
-        self.cursor = cursor
-    
-    def executeSQL(self, sql):
-        self.cursor.execute(sql)
-        self.db.commit()
+    def selectOpt(self, sql):  # 查询
+        # 申请资源
+        dbpOpt = dbPool()
+        results = dbpOpt.op_select(sql)
+        # 释放资源
+        dbpOpt.dispose()
+        return results
+    def modifyOpt(self, sql):  # 插入 \ 更新 \ 删除
+        # 申请资源
+        dbpOpt = dbPool()
+        results = dbpOpt.op_modify(sql)
+        # 释放资源
+        dbpOpt.dispose()
+        return results
 
     def signIn(self, restaurantName, password):
         sql = """SELECT restaurantID FROM Restaurant
-                WHERE restaurantName='%s' AND password='%s' ;""" % (restaurantName, password)
-        self.cursor.execute(sql)
-        results = self.cursor.fetchall()
+                    WHERE restaurantName='%s' AND password='%s' ;""" % (restaurantName, password)
+        results = self.selectOpt(sql)
         restaurantID = ''
-        for row in results:
-            restaurantID = row[0]
+        for r in results:
+            restaurantID = r['restaurantID']
         return restaurantID != ''
 
     def checkKeysCorrection(self, input, valid_keys):
@@ -37,37 +44,22 @@ class Tools:
         return True
 
     def getNow(self):
-        self.cursor.execute("SELECT DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%S');")
-        results = self.cursor.fetchall()
+        sql = "SELECT DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%S');"
+        results = self.selectOpt(sql)
         now = ''
-        for row in results:
-            now = row[0]
+        for r in results:
+            now = r["DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%S')"]
         return now
 
     def getTableKeys(self, tableName):
         sql = "SHOW COLUMNS FROM %s" % tableName
         resultSet = []
         try:
-            self.cursor.execute(sql)
-            results = self.cursor.fetchall()
-            # if tableName == 'Restaurant':
-            #     print('hhh\n\n')
-            #     print(results)
-            for row in results:
-                resultSet.append(row[0])
+            results = self.selectOpt(sql)
+            for r in results:
+                resultSet.append(r['Field'])
         except:
             print("[ERROR] Table '%s' does not exist." % tableName)
-        return resultSet
-
-    def getResults(self, sql, keys):
-        self.cursor.execute(sql)
-        results = self.cursor.fetchall()
-        resultSet = []
-        for row in results:
-            dict_row = {}
-            for idx, key in enumerate(keys):
-                dict_row[key] = row[idx]
-            resultSet.append(dict_row)
         return resultSet
     
     def get_config(self, file_name="config"):
@@ -75,3 +67,10 @@ class Tools:
         with open(file_name, "r", encoding="utf-8") as f:
             config = json.load(f)
         return config
+    
+    def byte2str(self, results):
+        for r in results:
+            for key in r.keys():
+                if type(r[key]) == type(b'1'):
+                    r[key] = r[key].decode('utf8')
+        return results
