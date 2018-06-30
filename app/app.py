@@ -9,6 +9,8 @@ from flask import Flask, jsonify, render_template, request, session, abort, make
 from flask_cors import CORS
 import redis
 
+from init_db import init_db
+
 # 引入OS模块中的产生一个24位的随机字符串的函数
 import os
 
@@ -740,9 +742,13 @@ def restaurant_order():
     dump_json = jsonify(number_order_json)
     return json_response(dump_json)
 
+
+# 插入假数据
+@app.route('/insert_fake_data2', methods=['GET'])
+def insert_fake_data2():
+    return init_db()
+
 # 处理404样式
-
-
 @app.errorhandler(404)
 def not_found_404(error):
     res = make_response(jsonify({'error': 'Not found'}), 404)

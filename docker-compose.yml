@@ -23,7 +23,7 @@ services:
     working_dir: /code/app
     command: bash -c "/code/app/docker-entrypoint.sh"
     environment:
-      ENV: TEST
+      ENV: DEV
     depends_on:
       - db
       - redis
