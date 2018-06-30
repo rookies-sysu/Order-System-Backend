@@ -64,21 +64,31 @@ sudo apt install mysql-client
 git clone https://github.com/rookies-sysu/Order-System-Backend
 ```
 
-#### 2.2 Docker-compose 一键部署
+#### 2.2 放置 Vue build 出来的静态页面
+
+将 vue build 出来的静态页面文件夹 `dist` 复制放到 `client/` 文件夹下。
+
+#### 2.3 Docker-compose 一键部署
 
 ```bash 
 cd Order-System-Backend
 docker-compose up -d
 ```
 
-#### 2.3 测试服务器运行状况
+#### 2.4 测试服务器运行状况
 
 ```bash
-curl localhost:8080/testRedis
+curl localhost:8080/api/testRedis
 Hello Tiny-Hippo Backend!! I have been seen 1 times.
 ```
 
-有获得以上响应则说明部署成功。
+有获得以上响应则说明 api 转发部署成功。
+
+```bash
+curl localhost:8080/
+```
+
+若成功 get 到页面文件，则说明使用 vue 写的 web 前端商品管理页面转发部署成功。
 
 ---
 
