@@ -4,3 +4,6 @@ DBUtils
 PyMySQL==0.8.1
 redis
 flask-cors
+
+pytest
+pytest-flask

@@ -21,7 +21,9 @@ services:
     volumes:
       - ./app:/code/app
     working_dir: /code/app
-    command: bash -c "/code/app/run-after-db-init.sh"
+    command: bash -c "/code/app/docker-entrypoint.sh"
+    environment:
+      ENV: TEST
     depends_on:
       - db
       - redis
