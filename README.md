@@ -104,12 +104,12 @@ mysql -h 127.0.0.1 -P 3306 -uroot -ptiny-hippo
 
 ### 4. 需要重建数据库
 
-将系统中的 `/opt/mysql_data` 删除后。重新 build 服务器即可。
+```
+make redeploy
+```
 
-重新 build 数据库的流程:
+### 5. 需要重新 build 镜像
 
 ```
-docker-compose down
-docker-compose build web db 
-docker-compose up -d
+make rebuild
 ```
