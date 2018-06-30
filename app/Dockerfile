@@ -4,16 +4,12 @@ ENV LANG C.UTF-8
 
 RUN apk add --no-cache bash
 
-RUN apk add --no-cache bash
-
 ADD . /code
 WORKDIR /code/app/
 
-# RUN pip install -r requirements.txt
-
+# Install python dependence
 COPY ./requirements.txt ./requirements.txt
 RUN pip install -r requirements.txt
-
-
+RUN pip install flask-cors --upgrade
 
 EXPOSE 5000

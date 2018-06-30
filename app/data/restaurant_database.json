@@ -1,6 +1,6 @@
 [
   {
-    "resturantName": "TINYHIPPO",
+    "restaurantName": "TINYHIPPO",
     "password": "123456",
     "phone": "86-12345678901",
     "email": "TINYHIPPO@gmail.com",
@@ -44,7 +44,7 @@
     ]
   },
   {
-    "resturantName": "McDonalds",
+    "restaurantName": "McDonalds",
     "password": "123456",
     "phone": "86-13234583927",
     "email": "McDonalds@gmail.com",

@@ -1,39 +1,125 @@
 [![Build Status](https://travis-ci.org/rookies-sysu/Order-System-Backend.svg?branch=docker)](https://travis-ci.org/rookies-sysu/Order-System-Backend)
 
-# Order-System-Backend
-Order system backend; python3 flask + mysql db
+# Order-System-Backend 后台部署文档
+Order system backend; Nginx + python3 flask + mysql db
 
-## 部署架构图
+---
 
-![](https://raw.githubusercontent.com/rookies-sysu/Dashboard/master/imgs/deployment_img.png)
+## 一、部署架构图
 
-目前 nginx 已经成功加入。
-
-## 目前发现的问题
-
-docker mysql 数据库的初始化需要使用api来进行初始化，不太科学，目前可以work。
-
-`data_import.py` 实际上不能用，景仰需要调试。`data_insert.py` 反而可以，所以应该不是docker部署的锅。
-
-后台的同学们写完 py 代码后麻烦用 autopep8 格式化一下代码，求你们了！orz
+![](https://github.com/rookies-sysu/Dashboard/blob/master/imgs/deployment_img.png?raw=true)
 
 
-** 业务逻辑层和持久化层的链接还是有不通的地方，需要进一步调试，具体部署调试方法看下面 **
+---
 
+## 二、部署流程
 
-## docker build 部署流程
+### 1. 服务器后台环境配置
 
-1. 上官网，找资料，安装好 docker
-2. 查找 `docker-compose` 的官方文档，安装 `docker-compose`
-3. 进入到根目录，运行 `docker-compose up` 进行项目启动，初次运行需要 pull 镜像，耗时稍长
-4. 看到如下输出，`db_1` 表示已经准备好接受连接，`web_1` 表示已经准备好接受 request ![](https://raw.githubusercontent.com/rookies-sysu/Dashboard/master/imgs/docker-compose-flask-mysql-res.png)
-5. 在浏览器上访问 `localhost:8080/testRedis`， 可以看到 `Hello Tiny-Hippo Backend!! I have been seen 1 times. ` 的字样，表示服务器已经成功work。刷新可以发现 times 前面的数字不断递增，说明 redis 缓冲容器正常运行并连接上了。钟涛接下来要在业务逻辑层对 redis 进行操作实现点菜逻辑。
-6. 在浏览器上访问 `http://localhost:8080/insert_fake_data1` ，如果收到 `Good createDB` 消息，说明数据库假数据已经插入; 在浏览器上访问 `http://localhost:8080/insert_fake_data2` ，如果收到 `insert fake data 2 success!` 消息，说明数据库较为完备的数据已经插入。
-7. 连接数据库操作： 在终端输入 `mysql -h 172.19.0.1 -P 3306 -u root -p`， 密码是 `tiny-hippo` , 即可以正常连上数据库。注意，`172.19.0.1` 这个ip地址只在 longjj 的本机上适用，这是 docker-compose 给 db 这个容器随机分配的一个地址，如果上述命令连接不上，请上网查一下如何找到一个container的地址。(google `docker inspect`)
-8. 数据库已经可以成功持久化。
-8. 对于 py 程序代码，直接在本地修改保存后就可以直接在浏览器上测试，因为已经在 docker-compose 中挂载了相关代码文件，可以实时更新容器中的代码，不需要停掉服务器程序。如果需要修改容器中的配置，或者重新 build 容器，需要先 `docker-compose down` 停掉当前正在跑的服务器，再 `docker-compose build {你想要build的容器名(在docker-compose.yml文件中可以看到)}`，再 `docker-compose up` 重启服务器。重新开始调试。
-9. 除此之外如果还有其他问题，在群里提出疑问后，先尝试自己解决。
-10. 由于持久化层和业务逻辑层都没有做test处理，所以在调试过程中可能需要看一下其他层的工作代码，都了解一下。我写docker帮你们debug已经弄了整整4天了，由衷的感觉到大家要互相看看。
-11. 目前的数据库连接方式由于采用直接 sql， 维护成本巨大，而且目前还不能稳稳work，开发任务巨大。考虑一下转 ORM，潘老师也是建议 ORM。**不管用什么技术，保证数据库要work就行。**
-12. 业务逻辑层处理客户点餐的逻辑得抓紧时间写了，包括对 redis 的操作，其中可以先忽略掉持久化层的调用，起码得给前端一些反馈。
-13. 有什么玄学问题主要看一下各种包的版本。
+#### 1.1 服务器系统环境
+
+- 腾讯云 Ubuntu 16.04 LTS Server
+
+#### 1.2 Docker 安装
+
+- [官方参考链接](https://docs.docker.com/install/linux/docker-ce/ubuntu/#prerequisites)
+
+- [中文参考链接](https://yeasy.gitbooks.io/docker_practice/content/install/ubuntu.html)
+
+若通过上面链接中给出的安装测试 `sudo docker run hello-world` ，则证明安装成功。
+
+#### 1.3 Docker-Compose 安装
+
+- [官方参考链接](https://docs.docker.com/compose/install/)
+
+截至于 2018/06/24 版本安装示例：
+
+1. Run this command to download the latest version of Docker Compose:
+```bash
+sudo curl -L https://github.com/docker/compose/releases/download/1.21.2/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
+```
+
+2. Apply executable permissions to the binary:
+```bash
+sudo chmod +x /usr/local/bin/docker-compose
+```
+
+3. Test the installation.
+```bash
+$ docker-compose --version
+docker-compose version 1.21.2, build 1719ceb
+```
+
+#### 1.4 Mysql-Client 安装（验证测试用）
+
+```
+sudo apt install mysql-client
+```
+
+### 2. 服务器程序配置运行
+
+#### 2.1 拉取后台源代码
+
+```bash
+git clone https://github.com/rookies-sysu/Order-System-Backend
+```
+
+#### 2.2 放置 Vue build 出来的静态页面
+
+将 vue build 出来的静态页面文件夹 `dist` 复制放到 `client/` 文件夹下。
+
+#### 2.3 Docker-compose 一键部署
+
+```bash 
+cd Order-System-Backend
+docker-compose up -d
+```
+
+#### 2.4 测试服务器运行状况
+
+```bash
+curl localhost:8080/api/testRedis
+Hello Tiny-Hippo Backend!! I have been seen 1 times.
+```
+
+有获得以上响应则说明 api 转发部署成功。
+
+```bash
+curl localhost:8080/
+```
+
+若成功 get 到页面文件，则说明使用 vue 写的 web 前端商品管理页面转发部署成功。
+
+---
+
+## 三、常见问题解决方法
+
+### 1. Docker 安装失败
+
+可能是因为天朝被墙的原因，强烈建议使用国内源而不是官方源，详情可以见前面 docker 安装的[中文参考链接](https://yeasy.gitbooks.io/docker_practice/content/install/ubuntu.html)。
+
+### 2. Docker 镜像拉取缓慢
+
+使用国内镜像源加速。
+
+[参考链接](https://yeasy.gitbooks.io/docker_practice/content/install/mirror.html)
+
+### 3. 需要查看数据库内部状态使用
+
+```
+mysql -h 127.0.0.1 -P 3306 -uroot -ptiny-hippo
+```
+
+即可以正常使用 mysql-client 访问数据库
+
+### 4. 需要重建数据库
+
+```
+make redeploy
+```
+
+### 5. 需要重新 build 镜像
+
+```
+make rebuild
+```

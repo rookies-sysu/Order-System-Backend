@@ -20,11 +20,6 @@
 
 ## Usage
 
-### Create DataBase
-
-```shell
-python createDB.py
-```
 ### Import data
 ```shell
 python data_importer.py

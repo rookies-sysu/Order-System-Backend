@@ -21,7 +21,9 @@ services:
     volumes:
       - ./app:/code/app
     working_dir: /code/app
-    command: bash -c "/code/app/run-after-db-init.sh"
+    command: bash -c "/code/app/docker-entrypoint.sh"
+    environment:
+      ENV: DEV
     depends_on:
       - db
       - redis
@@ -36,9 +38,12 @@ services:
     image: "redis:alpine"
     networks:
       - redis_nw
-
+    ports:
+      - "6379:6379"
   nginx:
-    image: nginx:latest
+    build:
+      context: .
+      dockerfile: ./nginx/Dockerfile
     restart: always
     ports:
       - "8080:80"
