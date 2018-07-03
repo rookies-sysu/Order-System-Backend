@@ -9,14 +9,13 @@ from flask import Flask, jsonify, render_template, request, session, abort, make
 from flask_cors import CORS
 import redis
 
-from init_db import init_db
+from dbTools import *
 
 # 引入OS模块中的产生一个24位的随机字符串的函数
 import os
 
 # 调用数据库操作
 import sys
-from dbOperators import *
 
 app = Flask(__name__, instance_relative_config=True)
 CORS(app, supports_credentials=True)
@@ -29,15 +28,12 @@ app.config['JSON_AS_ASCII'] = False
 app.debug = True
 
 # 解决跨域问题
-
-
 def json_response(dump_json):
     res = make_response(dump_json)
     res.headers['Access-Control-Allow-Origin'] = '*'
     res.headers['Access-Control-Allow-Methods'] = 'POST,GET,PUT,DELETE,OPTIONS'
     res.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type'
     return res
-
 
 rInfo = {}
 
@@ -50,9 +46,7 @@ dish_opt = dishOperator()
 # 操作Orderlist
 orderlist_opt = orderListOperator()
 
-
 cache = redis.Redis(host='redis', port=6379)
-
 
 ############################################################################################################
 # docker 开发测试api接口
@@ -746,7 +740,7 @@ def restaurant_order():
 # 插入假数据
 @app.route('/insert_fake_data2', methods=['GET'])
 def insert_fake_data2():
-    return init_db()
+    return dbInit()
 
 # 处理404样式
 @app.errorhandler(404)
