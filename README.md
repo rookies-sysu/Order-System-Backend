@@ -92,6 +92,12 @@ curl localhost:8080/
 
 ---
 
+#### 2.5 插入服务器初始化内容
+
+```bash
+curl localhost:8080/api/insert_fake_data2
+```
+
 ## 三、常见问题解决方法
 
 ### 1. Docker 安装失败
