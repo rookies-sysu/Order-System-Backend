@@ -14,9 +14,6 @@ from dbTools import *
 # 引入OS模块中的产生一个24位的随机字符串的函数
 import os
 
-# 调用数据库操作
-import sys
-
 app = Flask(__name__, instance_relative_config=True)
 CORS(app, supports_credentials=True)
 
@@ -29,6 +26,10 @@ app.debug = True
 
 # 解决跨域问题
 def jsonResponse(dump_json):
+    '''
+    参数值为已格式化的json
+    返回值为进行包装后的response
+    '''
     res = make_response(dump_json)
     res.headers['Access-Control-Allow-Origin'] = '*'
     res.headers['Access-Control-Allow-Methods'] = 'POST,GET,PUT,DELETE,OPTIONS'
@@ -89,6 +90,11 @@ def testRedis():
 
 @app.route('/restaurant/recommendation', methods=['GET', 'POST'])
 def restaurantRecommendation():
+    '''
+    api使用情况如下:
+    methods='GET'时,用于获取餐店推荐菜品列表
+    methods='POST'时,用于新增餐店推荐菜品
+    '''
     if request.method == 'GET':
         dish_json = []
         restaurant_id = selectUniqueItem(
@@ -176,6 +182,10 @@ def restaurantRecommendation():
 
 @app.route('/restaurant/getdish/<int:dish_id>', methods=['GET'])
 def getDish(dish_id):
+    '''
+    api使用情况如下:
+    methods='GET'时, 根据参数dish_id获取特定菜品的信息并返回
+    '''
     if not identifyOperator(tableName="Dish", dishID=dish_id):
         abort(400, {'message': '菜品不存在'})
     dish_json = []
@@ -202,12 +212,13 @@ def getDish(dish_id):
     })
     return jsonResponse(jsonify(dish_json))
 
-
-# 顾客信息记录
-
-
 @app.route('/restaurant/customer/record', methods=['POST'])
 def customerRecord():
+    '''
+    api使用情况如下:
+    methods='POST'时, 登记顾客信息
+    记录顾客的CustomerID和TableID作为session,并由POST信息生成特定的key-value存储在redis上
+    '''
     if not request.json or ('customerId' not in request.json) or ('customerName' not in request.json) or ('table' not in request.json) or ('customerImageUrl' not in request.json):
         abort(400)
     # 将用户信息记录至session并保存至redis
@@ -228,12 +239,13 @@ def customerRecord():
     dump_json = jsonify(new_key+" is Recorded")
     return jsonResponse(dump_json)
 
-
-# 顾客编写小订单
-
-
 @app.route('/restaurant/customer/edit', methods=['PUT'])
 def customerEdit():
+    '''
+    api使用情况如下:
+    methods='PUT'时, 顾客编写小订单
+    根据顾客自身的session(CustomerID和TableID)来搜索在redis上存储的key-value,然后由PUT信息进行替换
+    '''
     dump_json = jsonify("CustomerID or TableID is None")
     if session.get('CustomerID') != None and session.get('TableID') != None:
         # 查找编写的edit-key
@@ -247,11 +259,14 @@ def customerEdit():
             dump_json = jsonify(edit_key+" cache had been clear!")
     return jsonResponse(dump_json)
 
-# 顾客查看小订单
-
 
 @app.route('/restaurant/customer/read', methods=['GET'])
 def customerRead():
+    '''
+    api使用情况如下:
+    methods='GET'时, 顾客查看个人小订单
+    根据顾客自身的session(CustomerID和TableID)来搜索在redis上存储的key-value,然后组合成json返回
+    '''
     dump_json = jsonify("CustomerID or TableID is None")
     if session.get('CustomerID') != None and session.get('TableID') != None:
         # 查找要查看的read-key
@@ -270,11 +285,13 @@ def customerRead():
             dump_json = jsonify(read_key+" cache had been clear!")
     return jsonResponse(dump_json)
 
-# 餐桌查看当前的Customer订单
-
-
 @app.route('/restaurant/table/read', methods=['GET'])
 def tableRead():
+    '''
+    api使用情况如下:
+    methods='GET'时, 顾客查看同一餐桌上所有的订单
+    根据顾客自身的session(TableID)来搜索在redis上存储的key-value,然后组合成json返回
+    '''
     dump_json = jsonify("TableID is None")
     if session.get('TableID') != None:
         table_items = []
@@ -300,11 +317,14 @@ def tableRead():
         dump_json = jsonify(table_items)
     return jsonResponse(dump_json)
 
-# 餐桌支付订单
-
 
 @app.route('/restaurant/table/payment', methods=['GET'])
 def tablePayment():
+    '''
+    api使用情况如下:
+    methods='GET'时, 顾客支付订单
+    根据顾客自身的session(TableID)来搜索在redis上存储的key-value,并写入后台订单数据库,随后在redis上进行删除
+    '''
     dump_json = jsonify("TableID is None")
     if session.get('TableID') != None:
         # get info of restaurant
@@ -349,11 +369,13 @@ def tablePayment():
     return jsonResponse(dump_json)
 
 
-# 顾客查看历史
-
-
 @app.route('/restaurant/customer/history', methods=['GET'])
 def customerHistory():
+    '''
+    api使用情况如下:
+    methods='GET'时, 顾客查看历史订单
+    根据顾客自身的session(CustomerID)来查询后台数据库中与顾客相关的历史订单,然后组合成json返回
+    '''
     dump_json = jsonify("error")
     if (session.get('CustomerID') == None):
         return jsonResponse(dump_json)
@@ -374,11 +396,13 @@ def customerHistory():
     dump_json = jsonify(history_json)
     return jsonResponse(dump_json)
 
-# 顾客账号获取菜单
-
 
 @app.route('/restaurant/customer/category', methods=['GET'])
 def customerGetCategory():
+    '''
+    api使用情况如下:
+    methods='GET'时, 顾客获取餐厅菜品列表
+    '''
     # get restaurant ID
     restaurantID = selectUniqueItem(
         tableName="Restaurant", restaurantName='TINYHIPPO', result=["restaurantID"])
@@ -420,11 +444,13 @@ def customerGetCategory():
     return jsonResponse(dump_json)
 
 
-# 餐厅账号进行或退出登录
-
-
 @app.route('/restaurant/session', methods=['POST', 'DELETE'])
 def restaurantLogin():
+    '''
+    api使用情况如下:
+    methods='POST'时,进行登录,根据POST信息查找数据库中对应的restaurant,随后组合成json返回
+    methods='DELETE'时,退出登录,返回Login Off
+    '''
     if request.method == 'POST':
         if not request.json or (not 'phone' in request.json) or (not 'password' in request.json):
             abort(400)
@@ -463,11 +489,14 @@ def restaurantLogin():
         # neither 'get' nor 'post'
         abort(400)
 
-# 餐厅账号获取菜单或新增菜品
-
 
 @app.route('/restaurant/category', methods=['GET', 'POST'])
 def restaurantCategory():
+    '''
+    api使用情况如下:
+    methods='GET'时,用于获取餐店菜品列表
+    methods='POST'时,用于新增餐店菜品
+    '''
     if request.method == 'GET':
         # 需要 RestaurantID
         restaurantID = selectUniqueItem(
@@ -521,7 +550,7 @@ def restaurantCategory():
         imageURL = str(request.json['imageUrl'])
         dishID = int(request.json['dishId'])
         categoryID = int(request.json['categoryId'])
-        # 插入订单，默认不管 description
+        # 插入菜品，默认不管 description
         dish_opt.manageDishTable(restaurantName=rstName, password=pwd)
         dish_opt.insertDishItem(dishName=name,
                                 dishDescription="",
@@ -534,11 +563,14 @@ def restaurantCategory():
         # neither 'get' nor 'post'
         abort(400)
 
-# 餐厅账号修改菜品信息或删除菜品
-
 
 @app.route('/restaurant/dish/<int:dishId>', methods=['PUT', 'DELETE', 'OPTIONS'])
 def restaurantDishChange(dishId):
+    '''
+    api使用情况如下:
+    methods='GET'时,根据参数dishId和POST信息修改特定菜品信息
+    methods='DELETE'时,根据参数dishId删除特定菜品
+    '''
     if not identifyOperator(tableName="Dish", dishID=dishId):
         abort(400)
     if request.method == 'PUT' or request.method == 'OPTIONS':
@@ -588,6 +620,10 @@ def restaurantDishChange(dishId):
 # 餐厅账号新增分类
 @app.route('/restaurant/category/', methods=['POST'])
 def restaurantCategoryAdd():
+    '''
+    api使用情况如下:
+    methods='POST'时,根据POST信息新增菜品分类
+    '''
     # 异常返回
     if not request.json or (not 'categoryName' in request.json):
         abort(400)
@@ -605,11 +641,14 @@ def restaurantCategoryAdd():
     dump_json = jsonify("Insert New DishType")
     return jsonResponse(dump_json)
 
-# 餐厅账号修改分类信息或删除分类
-
 
 @app.route('/restaurant/category/<int:categoryId>', methods=['PUT', 'DELETE'])
 def restaurantCategoryChange(categoryId):
+    '''
+    api使用情况如下:
+    methods='PUT'时,根据参数categoryId和PUT信息修改特定分类信息
+    methods='DELETE'时,根据参数categoryId删除特定分类
+    '''
     # get info of restaurant
     restaurantID = selectUniqueItem(
         tableName="Restaurant", restaurantName='TINYHIPPO', result=["restaurantID"])
@@ -642,6 +681,10 @@ def restaurantCategoryChange(categoryId):
 
 @app.route('/restaurant/order', methods=['GET'])
 def restaurantOrder():
+    '''
+    api使用情况如下:
+    methods='GET'时,根据参数pageSize和pageNumber来返回部分订单条目
+    '''
     # 每页订单的条目数
     pageSize = int(request.args.get('pageSize'))
     # 第几页订单
