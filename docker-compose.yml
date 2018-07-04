@@ -5,7 +5,7 @@ services:
     build: db/.
     environment:
       MYSQL_ROOT_PASSWORD: tiny-hippo
-      MYSQL_DATABASE: TINYHIPPO
+      # MYSQL_DATABASE: TINYHIPPO
       MYSQL_USER: tiny
       MYSQL_PASSWORD: tiny-hippo    
     ports:

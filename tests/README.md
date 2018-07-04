@@ -1,4 +1,25 @@
-# Test for Database
+
+
+# Test 流程指导
+
+在本地 `docker-compose up -d` 正常运行的情况下
+
+在根目录下运行 `make dbtest` 即可
+
+在 `tests/UnittestTextReport.txt` 中可以看到测试反馈
+
+首次使用 tests 可能需要重新 build 一下 db 容器
+
+[unittest 使用参考](https://blog.csdn.net/huilan_same/article/details/52944782)
+
+## 如何添加新的测试用例？
+
+1. 创建新的测试用例类
+2. 将测试用例类的测试添加到 `test_suite.py` 中
+
+--- 
+
+# 测试用例
 
 Testing after database has been created.
 
