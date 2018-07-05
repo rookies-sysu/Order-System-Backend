@@ -318,11 +318,7 @@ UPDATE NO ACTION);
 
 -- Insert Test Fake data for testing db select & update
 
-INSERT INTO `
-TINYHIPPOTEST`.`Restaurant
-`
-(restaurantName, password, phone, email) VALUES
-('testName', 'testPassword', 'testPhone', 'testEmail');
+INSERT INTO `Restaurant` (restaurantName, password, phone, email) VALUES ('testName', 'testPassword', 'testPhone', 'testEmail');
 
 SET SQL_MODE
 =@OLD_SQL_MODE;
