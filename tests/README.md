@@ -39,6 +39,62 @@ pip3 install -r requirements.txt
 
 Testing after database has been created.
 
+## 0 Initial Data
+
+**Table 'Restaurant':**
+
+| restaurantID | restaurantName | password       | phone       | email       |
+| :----------- | :------------- | :------------- | :---------- | :---------- |
+| 1            | "testName"     | "testPassword" | "testPhone" | "testEmail" |
+
+**Table 'RestaurantTable':**
+
+| tableID | tableNumber | currentOrderNumber | restaurantID |
+| :------ | :---------- | :----------------- | :----------- |
+| 1       | 1           | 1                  | 1            |
+
+**Table 'OrderList':**
+
+| orderID | orderNumber | orderDetail       | total | isPaid | status       | editedTime            | customerID       | tableID | restaurantID |
+| ------- | ----------- | ----------------- | ----- | ------ | ------------ | --------------------- | ---------------- | ------- | ------------ |
+| 1       | 1           | "testOrderDetail" | 10.0  | 0      | "testStatus" | "0000-00-00 00:00:00" | "testCustomerID" | 1       | 1            |
+
+**Table 'QRlink':**
+
+| linkID | linkImageURL       | tableID |
+| ------ | ------------------ | ------- |
+| 1      | "testLinkImageURL" | 1       |
+
+**Table 'DishType':**
+
+| dishTypeID | dishTypeName       | restaurantID |
+| ---------- | ------------------ | ------------ |
+| 1          | "testDishTypeName" | 1            |
+
+**Table 'Dish':**
+
+| dishID | dishName       | dishDescription       | onSale | price | dishImageURL       | dishHot | monthlySales | restaurantID | dishTypeID |
+| ------ | -------------- | --------------------- | ------ | ----- | ------------------ | ------- | ------------ | ------------ | ---------- |
+| 1      | "testDishName" | "testDishDescription" | 1      | 10.0  | "testDishImageURL" | 1       | 30           | 1            | 1          |
+
+**Table 'DishComment':**
+
+| dishCommentID | comment       | dishID |
+| ------------- | ------------- | ------ |
+| 1             | "testComment" | 1      |
+
+**Table 'Recommendation':**
+
+| recommendationID | title       | tag       | imageURL       | editedTime            | restaurantID |
+| ---------------- | ----------- | --------- | -------------- | --------------------- | ------------ |
+| 1                | "testTitle" | "testTag" | "testImageURL" | "0000-00-00 00:00:00" | 1            |
+
+**Table 'RecommendationDetails':**
+
+| recommendationID | dishID | description       |
+| ---------------- | ------ | ----------------- |
+| 1                | 1      | "testDescription" |
+
 
 
 ## 1 Select & Update
