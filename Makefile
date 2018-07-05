@@ -1,5 +1,7 @@
 deploy:
 	docker-compose up -d
+	sleep 60
+	curl localhost:8080/api/insert_fake_data2
 
 rebuild:
 	docker-compose down
@@ -11,6 +13,8 @@ redeploy:
 	sudo rm -rf /opt/mysql_data
 	docker-compose build web db nginx
 	docker-compose up -d
+	sleep 60
+	curl localhost:8080/api/insert_fake_data2
 
 dbtest:
 	# wait mysql db can connect

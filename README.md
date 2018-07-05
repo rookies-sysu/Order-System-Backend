@@ -129,3 +129,19 @@ make redeploy
 ```
 make rebuild
 ```
+
+### 6. docker-compose up -d 后访问服务器 502 Bad Gateway
+
+后台以及数据库第一次部署的时候需要一定时间进行初始化，请耐心等待十几秒后再发出请求
+
+或者，也可以改用 `docker-compose up` 命令，让后台的输出重定向到终端上，当看到下图时说明服务器已经初始化完成并且正在正常监听，此时再发出请求。
+
+![flask 正常工作的截图](http://or5jajfqs.bkt.clouddn.com/flask_working.png)
+
+### 7. 数据库 TINYHIPPO 中无数据
+
+请再次尝试使用 api 导入初始数据：
+
+```bash
+curl localhost:8080/api/insert_fake_data2
+```
