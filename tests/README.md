@@ -6,7 +6,7 @@
 
 使用 [Postman](https://www.getpostman.com/) 进行测试，将 `/postman_api_test` 中的配置文件导入 Postman 中即可以对所有后台的 API 进行测试
 
-###　如何添加新的测试用例？
+### 如何添加新的测试用例？
 
 在 Postman 中使用 GUI 设置合适的请求并导出到 `/postman_api_test` 中即可。
 

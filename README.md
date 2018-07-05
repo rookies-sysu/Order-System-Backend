@@ -154,7 +154,7 @@ curl localhost:8080/api/insert_fake_data2
 - Docker version 18.03.1-ce, build 9ee9f40
 - docker-compose version 1.21.2, build a133471
 
+2. 简单查看[后台测试文档](https://github.com/rookies-sysu/Order-System-Backend/blob/dbpool/tests/README.md)
 
-2. 联系仓库维护者
+3. Email 联系仓库维护者 [Johnny Law](https://github.com/longjj)
 
-[Johnny Law](https://github.com/longjj): luojj26@mail2.sysu.edu.cn
