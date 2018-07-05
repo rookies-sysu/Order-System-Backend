@@ -145,3 +145,11 @@ make rebuild
 ```bash
 curl localhost:8080/api/insert_fake_data2
 ```
+
+### 8. 其他不确定错误
+
+请检查系统环境配置是否和本仓库部署环境一致
+
+- python3.5
+- Docker version 18.03.1-ce, build 9ee9f40
+- docker-compose version 1.21.2, build a133471

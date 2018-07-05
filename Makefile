@@ -24,7 +24,7 @@ dbtest:
 	cp ./tests/dbConfig_TEST.py ./tests/dbTools/dbConfig.py
 
 	# Run the tests
-	cd tests && python test_suite.py
+	cd tests && python3 test_suite.py
 	
 	# remove the temp file
 	rm -rf ./tests/dbTools
