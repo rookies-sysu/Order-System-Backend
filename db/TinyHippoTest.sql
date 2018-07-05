@@ -317,16 +317,15 @@ DELETE NO ACTION
 UPDATE NO ACTION);
 
 -- Insert Test Fake data for testing db select & update
-
 INSERT INTO `Restaurant` (restaurantName, password, phone, email) VALUES ("testName", "testPassword", "testPhone", "testEmail");
 INSERT INTO `RestaurantTable` (tableNumber, currentOrderNumber, restaurantID) VALUES (1, 1, 1);
-INSERT INTO `OrderList` (orderNumber, orderDetail, total, isPaid, status, editedTime, customerID, tableID, restaurantID) VALUES (1, "testOrderDetail", 10.0, 0, "testStatus", "0000-00-00 00:00:00", "testCustomerID", 1, 1);
+INSERT INTO `OrderList` (orderNumber, orderDetail, total, isPaid, status, editedTime, customerID, tableID, restaurantID) VALUES (1, "testOrderDetail", 10.0, 0, "testStatus", "2017-01-01 00:00:00", "testCustomerID", 1, 1);
 INSERT INTO `QRlink` (linkImageURL, tableID) VALUES ("testLinkImageURL", 1);
 INSERT INTO `DishType` (dishTypeName, restaurantID) VALUES ("testDishType", 1);
 INSERT INTO `Dish` (dishName, dishDescription, onSale, price, dishImageURL, dishHot, monthlySales, restaurantID, dishTypeID) VALUES ("testDishName", "testDishDescription", 1, 10.0, "testDishImageURL", 1, 30, 1, 1);
 INSERT INTO `DishComment` (comment, dishID) VALUES ("testComment", 1);
-INSERT INTO `Recommendation` (title, tag, imageURL, editedTime, restaurantID) VALUES ("testTitle", "testTag", "testImageURL", "0000-00-00 00:00:00", 1);
-INSERT INTO `RecommendationDetails` (dishID, description) VALUES (1, "testDescription");
+INSERT INTO `Recommendation` (title, tag, imageURL, editedTime, restaurantID) VALUES ("testTitle", "testTag", "testImageURL", "2017-01-01 00:00:00", 1);
+INSERT INTO `RecommendationDetails` (recommendationID, dishID, description) VALUES (1, 1, "testDescription");
 
 SET SQL_MODE
 =@OLD_SQL_MODE;
