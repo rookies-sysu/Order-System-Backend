@@ -146,7 +146,14 @@ make rebuild
 curl localhost:8080/api/insert_fake_data2
 ```
 
-### 8. 其他不确定错误
+### 8. Vue 前端访问 localhost 出现跨域错误
+
+因为该前端 build 出来的拿数据的 api 指向的是我们的服务器，所以直接在本地部署并且尝试访问 localhost:8080 后要拿数据的话会出现跨域错误。所以只需要去前端代码把拿数据的api改成你需要部署的 api 地址再重新 build 即可。
+
+- [点餐系统 微信小程序前端](https://github.com/rookies-sysu/Order-System-Frontend)
+- [管理系统 Vue 前端](https://github.com/rookies-sysu/Management-System-Frontend)
+
+### 9. 其他不确定错误
 
 1. 请检查系统环境配置是否和本仓库部署环境一致
 
@@ -156,5 +163,5 @@ curl localhost:8080/api/insert_fake_data2
 
 2. 简单查看[后台测试文档](https://github.com/rookies-sysu/Order-System-Backend/blob/dbpool/tests/README.md)
 
-3. Email 联系仓库维护者 [Johnny Law](https://github.com/longjj)
+3. Email 联系仓库维护者 [Johnny Law](https://github.com/longjj).
 
