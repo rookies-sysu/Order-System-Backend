@@ -11,7 +11,14 @@
 在 Postman 中使用 GUI 设置合适的请求并导出到 `/postman_api_test` 中即可。
 
 ## Database 测试
-在本地 `docker-compose up -d` 正常运行的情况下
+
+1. 在本地安装相关 python3 依赖
+
+```bash
+pip3 install -r requirements.txt
+```
+
+2. 在本地 `docker-compose up -d` 正常运行的情况下
 
 在根目录下运行 `make dbtest` 即可
 
