@@ -2,6 +2,15 @@
 
 # Test 流程指导
 
+## Backend 后台 API 测试
+
+使用 [Postman](https://www.getpostman.com/) 进行测试，将 `/postman_api_test` 中的配置文件导入 Postman 中即可以对所有后台的 API 进行测试
+
+###　如何添加新的测试用例？
+
+在 Postman 中使用 GUI 设置合适的请求并导出到 `/postman_api_test` 中即可。
+
+## Database 测试
 在本地 `docker-compose up -d` 正常运行的情况下
 
 在根目录下运行 `make dbtest` 即可
@@ -12,7 +21,7 @@
 
 [unittest 使用参考](https://blog.csdn.net/huilan_same/article/details/52944782)
 
-## 如何添加新的测试用例？
+### 如何添加新的测试用例？
 
 1. 创建新的测试用例类
 2. 将测试用例类的测试添加到 `test_suite.py` 中
