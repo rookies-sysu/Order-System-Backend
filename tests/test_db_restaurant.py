@@ -9,13 +9,6 @@ class TestDbRestaurant(unittest.TestCase):
             'password': '123456',
             'phone': '10293847567',
             'email': 'rName1@mail.com'
-        },
-        {
-            'id': 2,
-            'restaurantName': 'rName2',
-            'password': '123456',
-            'phone': '10293847568',
-            'email': 'rName2@mail.com'
         }
     ]
 
@@ -35,4 +28,7 @@ class TestDbRestaurant(unittest.TestCase):
         self.assertEqual(ca['password'], res[0]['password'])
         self.assertEqual(ca['phone'], res[0]['phone'])
         self.assertEqual(ca['email'], res[0]['email'])
+
+    def test_delete(self):
+        pass
         
