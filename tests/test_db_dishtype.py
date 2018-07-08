@@ -5,9 +5,13 @@ class TestDbDishType(unittest.TestCase):
     def setUp(self):
         print('setUp...')
         self.opt = dishTypeOperator()
-        self.opt.manageDishTypeTable(restaurantName='rName1', password='123456')
 
     def test_insert_and_delete(self):
+        #未登录
+        state = self.opt.insertDishTypeItem(dishTypeName="testDishType")
+        self.assertEqual(False, state)
+        #登录
+        self.opt.manageDishTypeTable(restaurantName='rName1', password='123456')
         #首次插入dishtype
         state = self.opt.insertDishTypeItem(dishTypeName="testDishType")
         self.assertEqual(True, state)
