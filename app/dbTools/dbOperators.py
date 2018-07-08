@@ -749,7 +749,7 @@ class dishCommentOperator:
         password: password of restaurant
     """
     # Insert operator
-    def insertDishTypeItem(self, comment, dishID):
+    def insertDishCommentItem(self, comment, dishID):
         """ Insert DishComment item with parameters.
         Args:
             comment: comment of dish
@@ -1245,4 +1245,4 @@ def updateOperator(rstName, pwd, tableName, **kwargs):
             print("[FAILED] %s %s has been existed." % (result_str.split("=")[0], result_str.split("=")[1]) )
     else:
         print("[FAILED] CONDITION ' %s ' is not found." % condition_str)
-        return False
+    return False

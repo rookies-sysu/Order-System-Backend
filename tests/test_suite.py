@@ -13,19 +13,17 @@ from test_db_restauranttable import TestDbRestaurantTable
 if __name__ == '__main__':
     suite = unittest.TestSuite()
 
-    basic_tests = [TestDbBasic('test_select'), TestDbBasic('test_update')]
-    suite.addTests(basic_tests)
-
-    suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestDbDish))
-    suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestDbDishComment))
-    suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestDbDishType))
-    suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestDbOrderList))
-    suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestDbQRLink))
-    suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestDbRecommendation))
-    suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestDbRecommendationDetails))
-    suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestDbRestaurant))
-    suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestDbRestaurantTable))
-
+    suite.addTests([TestDbRestaurant('test_insert'), TestDbRestaurant('test_delete')])
+    suite.addTests([TestDbDishType('test_insert'), TestDbDishType('test_delete')])
+    suite.addTests([TestDbRestaurantTable('test_insert'), TestDbRestaurantTable('test_delete')])
+    suite.addTests([TestDbQRLink('test_insert'), TestDbQRLink('test_delete')])
+    suite.addTests([TestDbDish('test_insert'), TestDbDish('test_delete')])
+    suite.addTests([TestDbDishComment('test_insert'), TestDbDishComment('test_delete')])
+    suite.addTests([TestDbOrderList('test_insert'), TestDbOrderList('test_delete')])
+    suite.addTests([TestDbRecommendation('test_insert'), TestDbRecommendation('test_delete')])
+    suite.addTests([TestDbRecommendationDetails('test_insert'), TestDbRecommendationDetails('test_delete')])
+    suite.addTests([TestDbBasic('test_select'), TestDbBasic('test_update')])
+    
     with open('UnittestTextReport.txt', 'w') as f:
         runner = unittest.TextTestRunner(stream=f, verbosity=2)
         runner.run(suite)
