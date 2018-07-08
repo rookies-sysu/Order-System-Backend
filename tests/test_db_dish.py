@@ -5,7 +5,6 @@ class TestDbDish(unittest.TestCase):
     def setUp(self):
         print('setUp...')
         self.opt = dishOperator()
-        self.opt.manageDishTable(restaurantName='rName1', password='123456')
 
     def test_insert_and_delete(self):
         #插入用于辅助测试的dishtype
@@ -13,6 +12,12 @@ class TestDbDish(unittest.TestCase):
         dish_type_opt.insertDishTypeItem(dishTypeName="dishtype1")
         _, dishtype = selectOperator(tableName="DishType", dishTypeName="dishtype1", result=["dishTypeID"])
         
+        #未登录
+        state = self.opt.insertDishItem(dishName="testDishName", dishDescription="testDishDescription",
+                                    price=10.0, dishImageURL="testDishImageURL", dishTypeID=dishtype[0]['dishTypeID'])
+        self.assertEqual(False, state)
+        #登录
+        self.opt.manageDishTable(restaurantName='rName1', password='123456')
         #首次插入该dish
         state = self.opt.insertDishItem(dishName="testDishName", dishDescription="testDishDescription",
                                     price=10.0, dishImageURL="testDishImageURL", dishTypeID=dishtype[0]['dishTypeID'])
