@@ -13,7 +13,7 @@ if [ "$ENV" = "DEV" ]; then
 
 elif [ "$ENV" = "TEST" ]; then
     echo "Running test application"
-    exec py.test
+    exec pytest
 
 else
     echo "Please provide an environment"

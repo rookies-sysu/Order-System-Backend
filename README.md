@@ -129,3 +129,39 @@ make redeploy
 ```
 make rebuild
 ```
+
+### 6. docker-compose up -d 后访问服务器 502 Bad Gateway
+
+后台以及数据库第一次部署的时候需要一定时间进行初始化，请耐心等待十几秒后再发出请求
+
+或者，也可以改用 `docker-compose up` 命令，让后台的输出重定向到终端上，当看到下图时说明服务器已经初始化完成并且正在正常监听，此时再发出请求。
+
+![flask 正常工作的截图](http://or5jajfqs.bkt.clouddn.com/flask_working.png)
+
+### 7. 数据库 TINYHIPPO 中无数据
+
+请再次尝试使用 api 导入初始数据：
+
+```bash
+curl localhost:8080/api/insert_fake_data2
+```
+
+### 8. Vue 前端访问 localhost 出现跨域错误
+
+因为该前端 build 出来的拿数据的 api 指向的是我们的服务器，所以直接在本地部署并且尝试访问 localhost:8080 后要拿数据的话会出现跨域错误。所以只需要去前端代码把拿数据的api改成你需要部署的 api 地址再重新 build 即可。
+
+- [点餐系统 微信小程序前端](https://github.com/rookies-sysu/Order-System-Frontend)
+- [管理系统 Vue 前端](https://github.com/rookies-sysu/Management-System-Frontend)
+
+### 9. 其他不确定错误
+
+1. 请检查系统环境配置是否和本仓库部署环境一致
+
+- python3.5
+- Docker version 18.03.1-ce, build 9ee9f40
+- docker-compose version 1.21.2, build a133471
+
+2. 简单查看[后台测试文档](https://github.com/rookies-sysu/Order-System-Backend/blob/dbpool/tests/README.md)
+
+3. Email 联系仓库维护者 [Johnny Law](https://github.com/longjj).
+

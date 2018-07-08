@@ -108,4 +108,7 @@ db/config
 db/__pycache__/*
 
 # pytest
-.pytest cache/
+.pytest_cache/
+
+# unittest
+UnittestTextReport.txt
