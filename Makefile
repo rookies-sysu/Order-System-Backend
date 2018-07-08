@@ -17,6 +17,8 @@ redeploy:
 	curl localhost:8080/api/insert_fake_data2
 
 dbtest:
+	# rebuild TINYHIPPOTEST database for unittest
+	make redeploy
 	# wait mysql db can connect
 	while ! nc -z 127.0.0.1 3306; do sleep 3; done
 
@@ -28,3 +30,5 @@ dbtest:
 	
 	# remove the temp file
 	rm -rf ./tests/dbTools
+
+	# DB TEST Finished! Please check the test result in UnittestTextReport.txt!
